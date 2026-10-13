@@ -409,5 +409,5 @@ if __name__ == "__main__":
     fig_cloud()
     fig_profiles()
     fig_amplitude()
-    fig_heating()
+    # fig_heating()  # heated-background runs were numerically pathological (see REPORT)
     fig_resolution()
