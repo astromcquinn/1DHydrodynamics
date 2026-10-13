@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+pluto_setup/build/
+*.o
