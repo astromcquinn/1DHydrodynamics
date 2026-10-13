@@ -8,7 +8,7 @@
 #define  TIME_STEPPING                  RK2
 #define  NTRACER                        1
 #define  PARTICLES                      NO
-#define  USER_DEF_PARAMETERS            12
+#define  USER_DEF_PARAMETERS            13
 
 // Physics dependent declarations
 
@@ -33,6 +33,7 @@
 #define  MAX_COOL_RATE                  9
 #define  PHASE                          10
 #define  COOL_MASK                      11
+#define  COOL_MODE                      12
 
 // [Beg] user-defined constants (do not change this line)
 

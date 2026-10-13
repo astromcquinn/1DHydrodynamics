@@ -22,6 +22,9 @@
    COOL_MASK = 1 : cooling is multiplied by the passive tracer, so only cloud
                    material cools (cooling "off outside the cloud").
    HEAT_CGS > 0  : see below.
+  Cooling model (COOL_MODE, see radiat.cpp): 0 = 1D table Lambda(T) with a
+  floor at T_FLOOR; 1 = 2D table of cooling and heating rates vs (n_H, T),
+  e.g. photoionisation equilibrium in a UV background.
   Heating: a uniform, time-independent volumetric heating rate HEAT_CGS
   (erg cm^-3 s^-1) is added in radiat.cpp.  Set it to the cooling rate of
   the hot background so that the background is in thermal balance, or to 0

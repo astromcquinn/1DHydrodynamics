@@ -7,6 +7,8 @@ Parameter sweeps of gPLUTO runs (parallel, resumable).
     python sweep.py scaling       # density-scaling check
     python sweep.py heating       # cooling-masked vs heated background
     python sweep.py resolution    # resolution study of a small (isobaric) cloud
+    python sweep.py infinite_uvb cloud_uvb amplitude_uvb
+                                  # same with a photoionising UV background
 
 Each run is written to ../results/runs/<sweep>/<name>.npz; existing files are
 skipped, so an interrupted sweep can simply be restarted.
@@ -21,6 +23,7 @@ from multiprocessing import Pool
 import numpy as np
 
 import cooling as C
+import cooling_models as CM
 import plutorun as P
 
 NPROC = int(os.environ.get("NPROC", os.cpu_count() or 1))
@@ -121,7 +124,52 @@ def resolution_runs():
     return runs
 
 
-SWEEPS = dict(resolution=resolution_runs, infinite=infinite_runs, cloud=cloud_runs, amplitude=amplitude_runs,
+def cs_tcool_model(n, T, Z, cooling):
+    m = CM.make_model(cooling, Z)
+    rho = n * C.mp
+    tc = C.p_of(rho, T) / (C.GAMMA - 1) / m.net(rho, T)
+    return C.cs_of(T) * tc / C.kpc
+
+
+XS_INF = [0.03, 0.1, 0.3, 1, 3, 10, 30]
+
+
+def infinite_uvb_runs():
+    """Infinite medium with the Cloudy tables: UV background ("pie") at three
+    densities, and Cloudy CIE ("ciecl", density-independent) for reference."""
+    runs = []
+    T = 1e6
+    combos = [("pie", n) for n in (1e-4, 1e-3, 1e-2)] + [("ciecl", 1e-2)]
+    for (cool, n), Z, x in itertools.product(combos, [0.1, 0.3, 1.0], XS_INF):
+        lam = x * cs_tcool_model(n, T, Z, cool)
+        name = f"inf_{cool}_n{_fmt(n)}_Z{_fmt(Z)}_x{_fmt(x)}_A0p001"
+        runs.append(dict(name=name, rho_bg=n, T_bg=T, chi=1.0, L_cloud=-1,
+                         lam=lam, Z=Z, amp=1e-3, nx=512, tstop_factor=3.0,
+                         nout=150, cooling=cool))
+    for x in XS_INF:                       # nonlinear seeds
+        lam = x * cs_tcool_model(1e-3, T, 0.3, "pie")
+        name = f"inf_pie_n0p001_Z0p3_x{_fmt(x)}_A0p1"
+        runs.append(dict(name=name, rho_bg=1e-3, T_bg=T, chi=1.0, L_cloud=-1,
+                         lam=lam, Z=0.3, amp=0.1, nx=512, tstop_factor=3.0,
+                         nout=150, cooling="pie"))
+    return runs
+
+
+def cloud_uvb_runs():
+    runs = []
+    for kw in cloud_runs():
+        kw = dict(kw, cooling="pie", name=kw["name"].replace("cl_", "clpie_"))
+        runs.append(kw)
+    return runs
+
+
+def amplitude_uvb_runs():
+    return [dict(kw, cooling="pie", name=kw["name"].replace("amp_", "amppie_"))
+            for kw in amplitude_runs()]
+
+
+SWEEPS = dict(infinite_uvb=infinite_uvb_runs, cloud_uvb=cloud_uvb_runs,
+              amplitude_uvb=amplitude_uvb_runs, resolution=resolution_runs, infinite=infinite_runs, cloud=cloud_runs, amplitude=amplitude_runs,
               scaling=scaling_runs, heating=heating_runs)
 
 

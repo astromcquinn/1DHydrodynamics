@@ -17,6 +17,7 @@ import json
 import numpy as np
 
 import cooling as C
+import cooling_models as CM
 import linear_theory as LT
 
 PLUTO_EXE = os.environ.get("PLUTO_EXE", "pluto")
@@ -74,6 +75,7 @@ T_FLOOR         {T_floor:.8g}
 MAX_COOL_RATE   {max_cool:.8g}
 PHASE           {phase:.8g}
 COOL_MASK       {cool_mask:d}
+COOL_MODE       {cool_mode:d}
 """
 
 
@@ -85,28 +87,35 @@ def read_dbl(path, nx, nvar=6):
 class Run:
     def __init__(self, name, rho_bg=0.01, T_bg=1e6, chi=1.0, L_cloud=-1.0,
                  lam=10.0, Z=0.3, amp=1e-3, heat_mode="none", cool_mask=None,
-                 T_floor=1e4, nx=None, box=None, edge=0.0, phase=0.0,
+                 T_floor=None, cooling="cie", nx=None, box=None, edge=0.0, phase=0.0,
                  tstop=None, nout=100, tstop_factor=1.6, cfl=0.4,
                  max_cool=0.05, outdir="../results/runs", keep_raw=False):
         self.p = dict(name=name, rho_bg=rho_bg, T_bg=T_bg, chi=chi,
                       L_cloud=L_cloud, lam=lam, Z=Z, amp=amp,
-                      heat_mode=heat_mode, T_floor=T_floor, edge=edge,
+                      heat_mode=heat_mode, cooling=cooling, edge=edge,
                       phase=phase, cfl=cfl, max_cool=max_cool)
         self.infinite = L_cloud <= 0
         if cool_mask is None:   # default: cooling off outside the cloud
             cool_mask = 0 if self.infinite else 1
         self.p["cool_mask"] = int(cool_mask)
+        # cooling model: "cie" (original, approx. CIE + 1e4 K floor),
+        # "ciecl" (Cloudy CIE + floor), "pie" (Cloudy, HM12 UV background)
+        self.model = CM.make_model(cooling, Z)
+        if T_floor is not None:
+            self.model.Tfloor = T_floor
+        T_floor = self.model.Tfloor
+        self.p["T_floor"] = T_floor
         self.tab = C.CoolingTable.for_Z(Z)
         n_c, T_c = chi * rho_bg, T_bg / chi
         # heating = cooling of the hot background (per unit volume)
         if heat_mode == "balance":
             rho = rho_bg * C.mp
-            self.p["heat"] = C.nenH_of_rho(rho) * self.tab(T_bg)
+            self.p["heat"] = self.model.net(rho, T_bg)
         else:
             self.p["heat"] = 0.0
         # reference (unperturbed) isochoric history of the cloud gas
-        ref = LT.integrate(n_c, T_c, lam, table=self.tab, background="isochoric",
-                           amp=0.0, heat=self.p["heat"], Tfloor=T_floor)
+        ref = LT.integrate(n_c, T_c, lam, model=self.model, background="isochoric",
+                           amp=0.0, heat=self.p["heat"])
         self.t_floor_iso = ref["t"][-1]                       # Myr
         self.tcool0 = ref["tcool0_Myr"]
         self.cs_tcool0 = ref["cs_tcool0_kpc"]
@@ -130,7 +139,8 @@ class Run:
                               L_cloud=L_cloud, edge=edge, amp=amp, lam=lam,
                               heat=self.p["heat"], T_floor=T_floor,
                               max_cool=max_cool, phase=phase,
-                              cool_mask=self.p["cool_mask"])
+                              cool_mask=self.p["cool_mask"],
+                              cool_mode=self.model.cool_mode)
         self.outdir = outdir
         self.keep_raw = keep_raw
 
@@ -142,7 +152,7 @@ class Run:
         os.makedirs(d)
         with open(os.path.join(d, "pluto.ini"), "w") as f:
             f.write(self.ini)
-        C.write_pluto_table(os.path.join(d, "cooltable.dat"), self.tab.T, self.tab.L)
+        self.model.write_pluto(d)
         with open(os.path.join(d, "run.log"), "w") as log:
             ret = subprocess.run([os.path.abspath(PLUTO_EXE)], cwd=d, stdout=log,
                                  stderr=subprocess.STDOUT)

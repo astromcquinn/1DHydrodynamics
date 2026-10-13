@@ -43,46 +43,50 @@ import numpy as np
 from scipy.integrate import solve_ivp
 
 import cooling as C
-
-
-def _cutoff(T, Tfloor):
-    """PLUTO's smooth cooling cutoff, f = 1 - sech((T/Tf)^12), and dln f/dln T."""
-    y = (T / Tfloor) ** 12
-    if y > 700:
-        return 1.0, 0.0
-    sech = 1.0 / np.cosh(y)
-    f = 1.0 - sech
-    dlnf = 12.0 * y * sech * np.tanh(y) / max(f, 1e-300)
-    return f, dlnf
+import cooling_models as CM
 
 
 def integrate(n0, T0, lam_kpc, Z=None, table=None, background="isochoric",
               amp=1.0, heat=0.0, Tfloor=1.0e4, t_end=None, Tstop=None,
-              npts=400, rtol=1e-8, t_out=None):
+              npts=400, rtol=1e-8, t_out=None, model=None):
     """
     Integrate the linearised equations.
 
     n0      : initial cloud density in code units (rho / m_p, i.e. cm^-3)
     T0      : initial cloud temperature [K]
     lam_kpc : initial wavelength [kpc]
-    Z       : metallicity (solar units) -- or pass a CoolingTable as `table`
-    heat    : uniform volumetric heating rate [erg cm^-3 s^-1]
+    model   : a cooling model from cooling_models.py (net loss L(rho, T)).
+              Default: CIEFloor(Z) (or a CoolingTable passed as `table`),
+              i.e. the original collisional cooling with a floor at Tfloor.
+    heat    : extra uniform volumetric heating [erg cm^-3 s^-1]
     amp     : initial delta rho / rho (isobaric seed: q = w = 0)
+    Tstop   : stop when the background reaches this temperature.  Default:
+              1.05 x the floor / equilibrium temperature.  Tstop=0 integrates
+              to t_end, through the floor (the post-cooling phase).
     t_out   : optional output times [Myr] (default: npts uniform samples)
     Returns a dict of arrays (t in Myr).
     """
-    tab = table if table is not None else C.CoolingTable.for_Z(Z)
+    if model is None:
+        model = CM.CIEFloor(Z, Tfloor=Tfloor)
+        if table is not None:
+            model.tab = table
     g = C.GAMMA
     rho0 = n0 * C.mp
     p0 = C.p_of(rho0, T0)
     km = 2 * np.pi / (lam_kpc * C.kpc) / rho0          # mass wavenumber
-    tc0 = p0 / (g - 1) / (C.nenH_of_rho(rho0) * tab(T0))
+    Tf_model = getattr(model, "Tfloor", Tfloor)
+
+    def Lnet(rho, T):
+        L, Lr, LT = model.derivs(rho, T)
+        if heat:
+            f, dlnf = CM.cutoff(T, Tf_model)
+            L, LT = L - heat * f, LT - heat * f * dlnf
+        return L, Lr, LT
+
+    tc0 = p0 / (g - 1) / Lnet(rho0, T0)[0]
     if t_end is None:
         t_end = 50.0 * tc0
-    # Tstop: stop when the background reaches this temperature (default just
-    # above the floor).  Tstop=0 integrates to t_end, i.e. through the floor,
-    # which captures the ballistic (post-cooling) phase.
-    Tstop = Tstop if Tstop is not None else 1.05 * Tfloor
+    stop_fac = 1.05 if Tstop is None else None
     cs0 = C.cs_of(T0)
 
     # y = [ln rho0, ln p0, s, q, w/cs0]
@@ -91,27 +95,24 @@ def integrate(n0, T0, lam_kpc, Z=None, table=None, background="isochoric",
         rho, p = np.exp(lr), np.exp(lp)
         w = wn * cs0
         T = C.T_of(rho, p)
-        f, dlnf = _cutoff(T, Tfloor)
-        L = C.nenH_of_rho(rho) * tab(T) * f
-        LT = tab.dlnL_dlnT(T) + dlnf
+        L, Lr, LT = Lnet(rho, T)
         r = (g - 1) * L / p
-        hh = (g - 1) * heat / p * f
         if background == "isochoric":
-            D = 0.0
-            dlp = -(r - hh)
+            D, dlp = 0.0, -r
         elif background == "isobaric":
-            D = (r - hh) / g
-            dlp = 0.0
+            D, dlp = r / g, 0.0
         else:
             raise ValueError(background)
         k = km * rho
         ds = s * D - k * w
         dw = k * p / rho * q
-        dq = q * (r - hh) + g * s * D - g * k * w - r * (2 * s + LT * (q - s))
+        dq = q * r + g * s * D - g * k * w - (g - 1) / p * (Lr * s + LT * (q - s))
         return [D, dlp, ds, dq, dw / cs0]
 
     def hit_floor(t, y):
-        return C.T_of(np.exp(y[0]), np.exp(y[1])) - Tstop
+        rho, p = np.exp(y[0]), np.exp(y[1])
+        Ts = stop_fac * model.T_eq(rho) if stop_fac else Tstop
+        return C.T_of(rho, p) - Ts
     hit_floor.terminal = True
 
     y0 = [np.log(rho0), np.log(p0), amp, 0.0, 0.0]
@@ -129,11 +130,13 @@ def integrate(n0, T0, lam_kpc, Z=None, table=None, background="isochoric",
     rho, p = np.exp(Y[0]), np.exp(Y[1])
     T = C.T_of(rho, p)
     k = km * rho
-    tc = p / (g - 1) / (C.nenH_of_rho(rho) * np.maximum(tab(T), 1e-40))
+    Ls = np.array([Lnet(a, b) for a, b in zip(rho, T)])
+    tc = p / (g - 1) / np.where(np.abs(Ls[:, 0]) > 0, np.abs(Ls[:, 0]), 1e-300)
     out = dict(t=t / C.Myr, T=T, n=rho / C.mp, p=p, s=Y[2], q=Y[3],
                w=Y[4] * cs0, k=k, lam_kpc=2 * np.pi / k / C.kpc,
                kcs_tcool=k * C.cs_of(T) * tc, tcool0_Myr=tc0 / C.Myr,
-               cs_tcool0_kpc=cs0 * tc0 / C.kpc, LambdaT=tab.dlnL_dlnT(T))
+               cs_tcool0_kpc=cs0 * tc0 / C.kpc,
+               LambdaT=Ls[:, 2] / np.where(Ls[:, 0] != 0, Ls[:, 0], 1e-300))
     return out
 
 
