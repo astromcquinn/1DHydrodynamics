@@ -202,7 +202,7 @@ def fig_amplitude_uvb():
                                    label=f"A$_0$ = {A:g}")
                         Lx = p["L_cloud"] / d["cs_tcool0"]
             a.set_title(f"{lab}: n$_{{bg}}$ = {n:g} (L/c$_s$t$_{{cool}}$ = {Lx:.2g})")
-            a.set_ylim(1e-4, 1e2)
+            a.set_ylim(1e-4, 5e2)
             a.axvline(1, color=GRID, lw=1)
             if row == 1:
                 a.set_xlabel(r"t / t$_{floor}$")

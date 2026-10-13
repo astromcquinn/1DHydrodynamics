@@ -44,7 +44,9 @@ below. The repository README (`astromcquinn/1DHydrodynamics`, branch
    the equations are unchanged under n → a n with lengths and times scaled by 1/a.
    A scan to n = 10⁻⁴ cm⁻³ is the same as scanning cloud size and wavelength
    ×100. I checked this directly: runs with (n, L) = (10⁻², 50 kpc), (10⁻³, 500
-   kpc) and (10⁻⁴, 5000 kpc) agree to 3–4 digits in scaled time.
+   kpc) and (10⁻⁴, 5000 kpc) agree to 3–4 digits in scaled time. This holds
+   only for collisional cooling: a photoionizing UV background breaks it
+   (§3.8).
 5. **Minimum perturbation that goes nonlinear** (Fig. 4): about 1% for
    x ≲ 0.3 in an infinite medium or large cloud, rising to ≳ 30% for x ≳ 3; and
    2×10⁻⁴ to 2×10⁻³ in a small (isobaric) cloud. Nonlinear runs condense into cold
@@ -64,6 +66,14 @@ below. The repository README (`astromcquinn/1DHydrodynamics`, branch
    λ = 2–460 c_s t_cool, the density growth by 2.5 t_floor is
    **G − 1 ≈ 50 (c_s t_cool/λ)²**, still rising roughly linearly in time
    (§3.7). It is slow, not absent.
+9. **A photoionizing UV background (§3.8) changes the details, not the
+   picture.** With Cloudy tables in the Haardt & Madau (2012) z = 0
+   background, the gas settles at T_eq ≈ 1–2×10⁴ K (lower at higher density)
+   instead of a hard floor, and cooling below ~10⁵ K is suppressed at low
+   density. In the cloud runs the growth while cooling is unchanged (median
+   ratio 1.0), and the later growth is ~30% larger (up to 2×). The UV
+   background matters most for nonlinear seeds: dense clumps survive in
+   intermediate clouds instead of re-expanding.
 8. **Measure the cloud interior, as the student does.** A maximum taken over the
    whole cloud would be dominated by the edges, which are compressed when the
    cloud loses pressure support (3–25 in our runs even when nothing grows
@@ -218,6 +228,80 @@ to ~28), but not yet by 2.5 t_floor at x ≈ 20.
 
 ![isochoric](figures/fig11_isochoric_regime.png)
 
+### 3.8 With a photoionizing UV background (Figs. 12–17)
+
+Everything above uses collisional-ionization-equilibrium (CIE) cooling with a
+hard floor at 10⁴ K. Here I repeat the survey with **Cloudy tables in the
+Haardt & Madau (2012) UV background at z = 0**: the photoionization-equilibrium
+tables distributed with Grackle (Smith et al. 2017), which include
+photoheating. The net cooling now depends on density as well as temperature,
+so gPLUTO reads a 2D table in (n_H, T) (`COOL_MODE = 1`), and the linear theory
+uses L(ρ, T) with both of its derivatives. To separate the effect of
+photoionization from the change of atomic data, I also ran the Cloudy CIE table
+with the same 10⁴ K floor. The results with and without the UV background are
+shown side by side below. The original CIE results above are unchanged.
+
+**What changes in the cooling (Fig. 12).** Above ~3×10⁵ K the three curves
+agree; my original approximate CIE curve is 0.1–0.3 dex higher than Cloudy's
+between 2×10⁵ and 3×10⁶ K. Below ~10⁵ K the UV background suppresses cooling,
+strongly at low density: at n = 10⁻⁴ the 10⁵ K peak is roughly halved and the
+hydrogen peak near 2×10⁴ K disappears. The gas settles at an equilibrium
+temperature T_eq = 1.9×10⁴, 1.3×10⁴ and 1.0×10⁴ K at densities
+n = ρ/m_p = 10⁻⁴, 10⁻³ and 10⁻² cm⁻³. Because T_eq falls with density, compressed gas
+is cooler than its surroundings at equilibrium, which makes it easier to
+compress than isothermal gas at a floor.
+
+![cooling models](figures/fig12_cooling_models.png)
+
+**Validation (Fig. 13).** gPLUTO and the linear theory again agree to ~4
+digits, through the cooling and the subsequent phase at T_eq. This needed the
+linear theory to use the exact slopes of the bilinear table interpolation that
+PLUTO uses; with smoothed derivatives they differed by up to 50%.
+
+![validation uvb](figures/fig13_validation_uvb.png)
+
+LINEAR_UVB_PLACEHOLDER
+
+**Infinite medium (Fig. 15).** For Z = 0.3, the growth while cooling is:
+
+| λ/(c_s t_cool) | CIE approx. + floor (original) | Cloudy CIE + floor | UV bkg, n = 10⁻⁴ / 10⁻³ / 10⁻² |
+|---|---|---|---|
+| 0.03 | 123 | 125 | 72 / 109 / 135 |
+| 0.3 | 27 | 54 | 23 / 20 / 18 |
+| 1 | 6.1 | 12 | 5.9 / 5.2 / 4.9 |
+| 3 | 1.7 | 2.7 | 1.7 / 1.6 / 1.6 |
+
+With the same atomic data, the UV background reduces the growth while cooling
+by 2–3× for λ ~ 0.3–3 c_s t_cool: the gas no longer passes through the very
+short cooling times of the hydrogen peak. Growth including the post-cooling
+phase is almost the same in all models (~28× at λ = c_s t_cool). Seeds of 0.1
+still condense into clumps 26–46× denser than the mean. My original
+approximate curve happens to land close to the UV-background results for
+x ≥ 0.3, because its errors partly offset the missing photoionization.
+
+![infinite uvb](figures/fig15_infinite_uvb.png)
+
+**Clouds (Fig. 16).** The 62 cloud runs were repeated with the UV background.
+For the 39 pairs that are resolved in both, the growth while cooling is
+unchanged (median ratio UV/CIE = 1.02; 10–90% range 0.9–1.6), and the growth
+by 2.5 t_floor is 27% larger (median; up to 2×). The isochoric scaling of §3.7
+still holds, with a smaller prefactor: (G − 1) x² ≈ 34 (10–90%: 24–86) instead
+of 50. Note that the cooling length, and hence x and L/(c_s t_cool) for a given
+cloud, now depend on density in a way that the CIE runs did not.
+
+![cloud uvb](figures/fig16_cloud_uvb.png)
+
+**Nonlinear seeds (Fig. 17).** Here the UV background matters most. In the
+intermediate cloud (n_bg = 10⁻³, L ≈ 5–9 c_s t_cool), seeds of 0.1 and 0.3
+reach interior contrasts of 8 and 145 (CIE + floor: 2.2 and 69). With the UV
+background the A = 0.3 clump survives to the end of the run (contrast 129 at
+2.5 t_floor), where with the floor it re-expands to 5. In the small cloud
+(n_bg = 10⁻⁴), the transient structure smooths out even more completely
+(contrast ~10⁻³ by 2.5 t_floor, compared with 0.05). These late-time
+small-cloud values are again affected by resolution (§3.6).
+
+![amplitude uvb](figures/fig17_amplitude_uvb.png)
+
 ## 4. Critique of the poster setup
 
 These are meant as concrete suggestions for the student; several of them change
@@ -278,10 +362,11 @@ how the existing results should be read.
    but says little about fragmentation. Once the mode growth is understood, try
    a perturbation spectrum (random phases) and smoothed edges (`EDGE_WIDTH`).
 10. **Cooling function at low density.** At n ~ 10⁻⁴ cm⁻³, photoionization by
-    the UV background changes Λ substantially below ~10⁵ K. It also breaks the
-    density scaling above, because ionization then depends on n. If the
-    low-density regime matters, use Wiersma et al. (2009) tables, as Das et al.
-    did.
+    the UV background changes Λ substantially below ~10⁵ K and replaces the
+    floor with a density-dependent T_eq. §3.8 shows the effect: modest on
+    linear growth, larger on the nonlinear outcome. `COOL_MODE = 1` with the
+    Cloudy/HM12 table (or Wiersma et al. 2009 tables, as Das et al. used) is
+    the better default for CGM densities.
 11. **1D limits.** In 1D the cold gas can only form slabs, and at a uniform floor
     temperature and pressure the slabs end at the same density. "Shattering"
     needs 2D/3D. The 1D survey is still the right first step: it tells you
@@ -304,8 +389,12 @@ how the existing results should be read.
 
 ## 6. What was not done or is uncertain
 
-* The cooling table is an approximation (§2); trends in x should be robust, but
-  the precise amplification factors depend on Λ_T between 10⁵ and 10⁶ K.
+* The original CIE table is an approximation (§2), 0.1–0.3 dex off between
+  2×10⁵ and 3×10⁶ K. The Cloudy runs in §3.8 do not have this problem, and the
+  trends in x are the same.
+* The UV-background runs use z = 0 only, keep the mean molecular weight of
+  fully ionized gas (T is slightly misplaced near 10⁴ K), and ignore
+  self-shielding, which would matter only for much denser gas.
 * The PLUTO 4.4 files were not compiled.
 * The heated-background comparison did not produce usable runs (§4, item 7).
 * Late-time values for strongly compressed small clouds are resolution-limited.
