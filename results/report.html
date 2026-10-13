@@ -111,7 +111,16 @@ below. The repository README (<code>astromcquinn/1DHydrodynamics</code>, branch
    x ~ 1–10). In small clouds, by contrast, most of the structure is transient:
    once all the gas sits at 10⁴ K at the same pressure, the density evens out
    again.
-7. <strong>Measure the cloud interior, as the student does.</strong> A maximum taken over the
+7. <strong>"Isochoric" does not mean "no growth".</strong> When λ ≫ c_s t_cool the density
+   is frozen while the gas cools, but the temperature and pressure
+   perturbations are not: denser parcels cool faster and pull ahead, so
+   δT/T = δp/p grows 17–50× (from δρ/ρ = 0.02 to 0.35–1). That pressure
+   pattern pushes gas from the hotter, underdense parcels into the colder,
+   denser ones, and the density follows afterwards. Across all cloud runs with
+   λ = 2–460 c_s t_cool, the density growth by 2.5 t_floor is
+   <strong>G − 1 ≈ 50 (c_s t_cool/λ)²</strong>, still rising roughly linearly in time
+   (§3.7). It is slow, not absent.
+8. <strong>Measure the cloud interior, as the student does.</strong> A maximum taken over the
    whole cloud would be dominated by the edges, which are compressed when the
    cloud loses pressure support (3–25 in our runs even when nothing grows
    inside; Fig. 6, right). Her central maximum avoids that. In our runs the
@@ -243,6 +252,36 @@ uniform (contrast ≲ 0.1) at every resolution. The peak nonlinear contrast is
 converged for small seeds (A₀ ≤ 10⁻²) but keeps rising with resolution for
 A₀ = 0.1, so quote it as a lower limit there.</p>
 <figure><img alt="resolution" src="figures/fig10_resolution.png" loading="lazy"></figure>
+<h3>3.7 Growth in the isochoric regime (Fig. 11)</h3>
+<p>For λ ≫ c_s t_cool there is no time for pressure to equalize across a
+wavelength while the gas cools, so each parcel cools at its own fixed density.
+The density perturbation is then frozen at linear order, but it still matters:
+the cooling rate per particle is ∝ n Λ(T), so denser parcels run ahead in
+temperature. In linear theory</p>
+<p>d(δp/p)/dt = (1 − Λ_T) (δp/p)/t_cool − (2 − Λ_T) (δρ/ρ)/t_cool,</p>
+<p>so the pressure/temperature perturbation is driven by the frozen density
+perturbation, and in cooling gas it also grows on its own wherever Λ_T &lt; 1. In
+the heated medium of Das et al. that needs Λ_T &lt; 0. In the runs, δT/T reaches
+0.35–1 from a seed of δρ/ρ = 0.02, independent of λ (Fig. 11, left).</p>
+<p>That temperature pattern is a pressure pattern: the hotter, underdense parcels
+are at higher pressure and push gas into the colder ones. Over the cooling time
+the gas moves only a fraction ~(c_s t_cool/λ)² of a wavelength, but the
+velocity it acquires persists after the gas reaches the floor. The density
+therefore keeps growing, roughly linearly in time. By 2.5 t_floor every cloud
+run with λ/(c_s t_cool) between 2 and 460 follows</p>
+<p>G − 1 ≈ 50 (c_s t_cool/λ)²</p>
+<p>(Fig. 11, right). This is the expected scaling for an impulse: a pressure
+contrast of order δT/T acting for ~t_cool across a wavelength λ. The prefactor
+grows with time, so longer runs will show more. The convergence of this flow
+plays out on the sound-crossing time of λ in the cold gas, λ/c_s(10⁴ K), which
+is ≈ 7x t_cool for cloud gas starting at 5×10⁵ K. Our runs (and the poster's) stop well before that.</p>
+<p>If the seed is large enough that δT/T reaches order unity before the floor,
+parts of the cloud are at 10⁴ K while their neighbours are still hot. The
+pressure contrast is then nonlinear and the cold parcels are crushed. This is
+the isochoric fragmentation (shattering) picture of McCourt et al. (2018).
+In the amplitude scan this happens for A = 0.3 at x ≈ 2 (interior contrast up
+to ~28), but not yet by 2.5 t_floor at x ≈ 20.</p>
+<figure><img alt="isochoric" src="figures/fig11_isochoric_regime.png" loading="lazy"></figure>
 <h2>4. Critique of the poster setup</h2>
 <p>These are meant as concrete suggestions for the student; several of them change
 how the existing results should be read.</p>
@@ -255,7 +294,9 @@ how the existing results should be read.</p>
    n_bg = 0.01, L = 50 kpc gives ×3 while cooling and ×10 including the
    post-cooling phase (Fig. 6). That is the same order as the poster's Fig. 6,
    so her measured growth looks physical. Most of it comes after the gas reaches
-   10⁴ K.</li>
+   10⁴ K. Even at χ = 2 the perturbations grow, just slowly, as
+   G − 1 ≈ 50 (c_s t_cool/λ)² by 2.5 t_floor and rising (§3.7). Running longer
+   would show more.</li>
 <li><strong>The diagnostic.</strong> Her central/interior maximum is the right idea. Two
    refinements help: measure in the mass coordinate, since the cloud shrinks
    and the "interior" moves; and project onto the seeded mode, which separates

@@ -300,6 +300,44 @@ def fig_cloud():
     save(fig, "fig6_cloud_sweep.png")
 
 
+def fig_isochoric():
+    """Growth in the isochoric regime (x > 1.5, L/c_s t_cool > 1.5)."""
+    R = runs("cloud")
+    if not R:
+        return
+    pts = []
+    for d in R:
+        m = cloud_metrics(d)
+        if m["Lx"] < 1.5 or m["x"] < 1.5:
+            continue
+        tf = d["t_floor_iso"]
+        cool = d["t"] <= 0.95 * tf
+        pts.append((m["x"], m["G_cool"] - 1, m["G_end"] - 1,
+                    np.abs(d["amp_mode_p"][cool]).max() / m_amp(d)))
+    pts = np.array(sorted(pts))
+    fig, ax = plt.subplots(1, 2, figsize=(10, 3.9))
+    ax[0].loglog(pts[:, 0], pts[:, 3], "o", color=S2, ms=5, label=r"$|\delta T/T|$ = $|\delta p/p|$, max before floor")
+    ax[0].loglog(pts[:, 0], np.maximum(pts[:, 1], 1e-3) + 1, "o", color=S1, ms=5, mfc="none",
+                 label=r"$|\delta\rho/\rho|$, max while cooling")
+    ax[0].axhline(1, color=INK2, lw=0.8, ls="--")
+    ax[0].set_xlabel(r"$\lambda_0/(c_s t_{cool})_0$")
+    ax[0].set_ylabel(r"amplitude / initial $\delta\rho/\rho$")
+    ax[0].set_title("While cooling: T and p grow, density does not")
+    ax[0].legend(fontsize=8)
+    xx = np.logspace(np.log10(1.5), np.log10(500), 50)
+    ax[1].loglog(pts[:, 0], pts[:, 2], "o", color=S1, ms=5, label="cloud runs, by 2.5 t$_{floor}$")
+    ax[1].loglog(xx, 50 / xx**2, color=INK2, lw=1, ls="--", label=r"$50\,(c_s t_{cool}/\lambda)^2$")
+    ax[1].set_xlabel(r"$\lambda_0/(c_s t_{cool})_0$")
+    ax[1].set_ylabel(r"$G - 1$ (density growth)")
+    ax[1].set_title("Afterwards: density grows from the pressure imprint")
+    ax[1].legend(fontsize=8)
+    save(fig, "fig11_isochoric_regime.png")
+
+
+def m_amp(d):
+    return d["params"]["amp"]
+
+
 def fig_profiles():
     picks = [("cloud", "cl_Z0p3_n0p01_L100_nw4p5_chi2", "Large cloud: L/(c$_s$t$_{cool}$) ≈ 190 (isochoric)"),
              ("cloud", "cl_Z0p3_n0p0001_L30_nw4p5_chi2", "Small cloud: L/(c$_s$t$_{cool}$) ≈ 0.6 (≈isobaric)")]
@@ -411,3 +449,4 @@ if __name__ == "__main__":
     fig_amplitude()
     # fig_heating()  # heated-background runs were numerically pathological (see REPORT)
     fig_resolution()
+    fig_isochoric()
