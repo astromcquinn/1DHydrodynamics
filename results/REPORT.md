@@ -260,9 +260,22 @@ PLUTO uses; with smoothed derivatives they differed by up to 50%.
 
 ![validation uvb](figures/fig13_validation_uvb.png)
 
-LINEAR_UVB_PLACEHOLDER
+**Linear theory (Fig. 14).** For an infinite medium starting at 10⁶ K, the UV
+background roughly halves the growth while cooling for λ ≈ 0.3–3 c_s t_cool,
+compared with Cloudy CIE with a floor, and the effect barely depends on density
+between 10⁻⁴ and 10⁻² cm⁻³. Including the post-cooling phase (dotted), all
+models agree to within ~30%. For small isobaric clouds the change is within a
+factor ~1.5 either way: slightly less growth at n = 10⁻⁴, slightly more at
+10⁻². Their amplification is set mostly by the compression from T₀ down to
+the final temperature, which a UV background changes only modestly. Starting
+from 5×10⁵ K gives the same picture.
 
-**Infinite medium (Fig. 15).** For Z = 0.3, the growth while cooling is:
+![linear uvb](figures/fig14_linear_uvb.png)
+
+![linear uvb T5e5](figures/fig14_linear_uvb_T5e5.png)
+
+**Infinite medium (Fig. 15).** The simulations reproduce the linear theory for
+every model, metallicity and density. For Z = 0.3, the growth while cooling is:
 
 | λ/(c_s t_cool) | CIE approx. + floor (original) | Cloudy CIE + floor | UV bkg, n = 10⁻⁴ / 10⁻³ / 10⁻² |
 |---|---|---|---|
