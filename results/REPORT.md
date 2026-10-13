@@ -151,17 +151,20 @@ floor and goes nonlinear even for A = 10⁻³.
 ### 3.6 Resolution (Fig. 10)
 
 The small-cloud case (n_bg = 10⁻⁴, L = 50 kpc, L/(c_s t_cool) ≈ 0.9) is the most
-demanding, because the cloud is compressed ~200–350× in density. Going from
-2048 cells over 150 kpc to 4096 cells over 100 kpc (3× finer):
+demanding, because the cloud is compressed ~200–350× in density. Same run at
+2048 cells over 150 kpc, and 4096 and 16384 cells over 100 kpc (3× and 12×
+finer):
 
-| A₀ | growth while cooling | peak interior max ρ/ρ̄ − 1 | at 1.5 t_floor |
+| A₀ | growth while cooling | peak interior max ρ/ρ̄ − 1 | at 2.5 t_floor |
 |---|---|---|---|
-| 10⁻³ | 1040 → 1120 | 14 → 17 | 0.05 → 0.08 |
-| 10⁻² | 84 → 85 | 16 → 24 | 0.05 → 0.14 |
+| 10⁻³ | 1040 / 1121 / 1140 | 14 / 18 / 19 | 0.05 / 0.03 / 0.09 |
+| 10⁻² | 84 / 85 / 96 | 18 / 24 / 26 | 0.07 / 0.04 / 0.10 |
+| 10⁻¹ | 13.8 / 13.9 / 13.9 | 28 / 47 / 75 | 0.05 / 0.06 / 0.12 |
 
-The linear growth and the late-time evening-out of the density are robust. The
-peak nonlinear contrast and the final compression of the slab are not
-converged. Runs at 16384 cells were still running when this was written.
+The growth during cooling is converged to ~10%. The late-time state is nearly
+uniform (contrast ≲ 0.1) at every resolution. The peak nonlinear contrast is
+converged for small seeds (A₀ ≤ 10⁻²) but keeps rising with resolution for
+A₀ = 0.1, so quote it as a lower limit there.
 
 ![resolution](figures/fig10_resolution.png)
 

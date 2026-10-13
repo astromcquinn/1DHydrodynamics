@@ -203,35 +203,43 @@ floor and goes nonlinear even for A = 10⁻³.</p>
 <figure><img alt="amplitude" src="figures/fig8_amplitude_scan.png" loading="lazy"></figure>
 <h3>3.6 Resolution (Fig. 10)</h3>
 <p>The small-cloud case (n_bg = 10⁻⁴, L = 50 kpc, L/(c_s t_cool) ≈ 0.9) is the most
-demanding, because the cloud is compressed ~200–350× in density. Going from
-2048 cells over 150 kpc to 4096 cells over 100 kpc (3× finer):</p>
+demanding, because the cloud is compressed ~200–350× in density. Same run at
+2048 cells over 150 kpc, and 4096 and 16384 cells over 100 kpc (3× and 12×
+finer):</p>
 <div class="tbl"><table>
 <thead>
 <tr>
 <th>A₀</th>
 <th>growth while cooling</th>
 <th>peak interior max ρ/ρ̄ − 1</th>
-<th>at 1.5 t_floor</th>
+<th>at 2.5 t_floor</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>10⁻³</td>
-<td>1040 → 1120</td>
-<td>14 → 17</td>
-<td>0.05 → 0.08</td>
+<td>1040 / 1121 / 1140</td>
+<td>14 / 18 / 19</td>
+<td>0.05 / 0.03 / 0.09</td>
 </tr>
 <tr>
 <td>10⁻²</td>
-<td>84 → 85</td>
-<td>16 → 24</td>
-<td>0.05 → 0.14</td>
+<td>84 / 85 / 96</td>
+<td>18 / 24 / 26</td>
+<td>0.07 / 0.04 / 0.10</td>
+</tr>
+<tr>
+<td>10⁻¹</td>
+<td>13.8 / 13.9 / 13.9</td>
+<td>28 / 47 / 75</td>
+<td>0.05 / 0.06 / 0.12</td>
 </tr>
 </tbody>
 </table></div>
-<p>The linear growth and the late-time evening-out of the density are robust. The
-peak nonlinear contrast and the final compression of the slab are not
-converged. Runs at 16384 cells were still running when this was written.</p>
+<p>The growth during cooling is converged to ~10%. The late-time state is nearly
+uniform (contrast ≲ 0.1) at every resolution. The peak nonlinear contrast is
+converged for small seeds (A₀ ≤ 10⁻²) but keeps rising with resolution for
+A₀ = 0.1, so quote it as a lower limit there.</p>
 <figure><img alt="resolution" src="figures/fig10_resolution.png" loading="lazy"></figure>
 <h2>4. Critique of the poster setup</h2>
 <p>These are meant as concrete suggestions for the student; several of them change
