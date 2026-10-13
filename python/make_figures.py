@@ -286,10 +286,10 @@ def fig_cloud():
     ax[0].set_title("Cloud runs: growth while cooling to 10$^4$ K")
     ax[1].set_title("Including post-cooling phase (to 2.5 $t_{floor}$)")
     ax[2].set_xlabel(r"interior max $\rho/\bar\rho - 1$ (edges excluded)")
-    ax[2].set_ylabel(r"poster metric: max$(\rho)/\bar\rho - 1$ (whole cloud)")
+    ax[2].set_ylabel(r"whole-cloud max$(\rho)/\bar\rho - 1$ (incl. edges)")
     lim = [1e-2, 1e2]
     ax[2].plot(lim, lim, color=INK2, lw=0.8, ls="--")
-    ax[2].set_title("Poster metric is set by the cloud edges")
+    ax[2].set_title("A whole-cloud maximum is set by the edges")
     from matplotlib.lines import Line2D
     h = [Line2D([], [], color=c, marker="o", ls="none", label=lab) for _, _, c, lab in bins]
     h += [Line2D([], [], color=INK2, marker="o", mfc="none", ls="none",

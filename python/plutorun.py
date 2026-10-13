@@ -212,7 +212,7 @@ class Run:
             ts["amp_max"].append(dr.max() / dr.mean() - 1)
             ts["amp_rms"].append(np.std(dr) / dr.mean())
             ts["size"].append(sel.sum() * dx)
-            # the student's diagnostic: max over the whole cloud incl. edges
+            # max over the whole cloud, edges included (for comparison)
             ts["nmax_over_nmean"].append(rho[sel].max() / nmean - 1)
             if i in prof_idx:
                 profiles.append(np.vstack([rho, prs, T, trc, vx]).astype(np.float32))

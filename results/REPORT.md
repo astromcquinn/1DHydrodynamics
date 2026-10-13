@@ -55,10 +55,12 @@ below. The repository README (`astromcquinn/1DHydrodynamics`, branch
    x ~ 1–10). In small clouds, by contrast, most of the structure is transient:
    once all the gas sits at 10⁴ K at the same pressure, the density evens out
    again.
-7. **The poster's diagnostic, max(ρ)/ρ̄ − 1 over the whole cloud, measures the
-   cloud edges, not the perturbation.** The edges are compressed when the cloud
-   loses pressure support. In our runs that metric is typically 3–25 (median 15)
-   even when the interior mode has not grown at all (Fig. 6, right).
+7. **Measure the cloud interior, as the student does.** A maximum taken over the
+   whole cloud would be dominated by the edges, which are compressed when the
+   cloud loses pressure support (3–25 in our runs even when nothing grows
+   inside; Fig. 6, right). Her central maximum avoids that. In our runs the
+   interior maximum and the projection onto the seeded mode agree in the
+   linear phase.
 
 ## 2. Setup used here
 
@@ -173,18 +175,21 @@ A₀ = 0.1, so quote it as a lower limit there.
 These are meant as concrete suggestions for the student; several of them change
 how the existing results should be read.
 
-1. **The poster's clouds sit deep in the isochoric regime, where linear theory
-   predicts no density growth.** At n_bg = 0.01–0.02 and T ≈ 10⁶ K, c_s t_cool of
-   the cloud gas is ~0.2–6 kpc, but L = 30–200 kpc and λ ≈ 7–30 kpc. So x ≫ 1
-   and the seeded mode should barely change while the cloud cools, which is what
-   we find (Fig. 6, yellow and green points). The growth on the poster has to
-   come from somewhere else; see the next point.
-2. **The diagnostic.** max(ρ)/ρ̄ − 1 over the cloud is dominated by the
-   compressed edges once the cloud loses pressure support. It also depends on
-   how "the cloud" is defined as it shrinks, and on the mean density, which
-   evolves. Measure the amplitude of the seeded mode instead: project onto the
-   mode in mass coordinate, over the cloud interior. `plutorun.Run.analyse`
-   does exactly this and can be reused.
+1. **Whether the poster's clouds can grow depends mostly on the density
+   contrast χ.** At n_bg = 0.01–0.02 and T_bg ≈ 10⁶ K, the cooling length
+   c_s t_cool of the cloud gas is only 0.2–1.4 kpc for χ = 2, but ~2–6 kpc for
+   χ ≈ 1.3. With λ ≈ 7–30 kpc that is x ≫ 1 (no growth) for χ = 2, but x ~ 2–5
+   for χ ≈ 1.3, where we do find growth. For example, χ = 1.3, Z = 0.1,
+   n_bg = 0.01, L = 50 kpc gives ×3 while cooling and ×10 including the
+   post-cooling phase (Fig. 6). That is the same order as the poster's Fig. 6,
+   so her measured growth looks physical. Most of it comes after the gas reaches
+   10⁴ K.
+2. **The diagnostic.** Her central/interior maximum is the right idea. Two
+   refinements help: measure in the mass coordinate, since the cloud shrinks
+   and the "interior" moves; and project onto the seeded mode, which separates
+   it from harmonics and from waves launched at the edges once they reach the
+   interior. `plutorun.Run.analyse` does both and returns the interior maximum
+   too (`amp_max`), so the two can be compared directly.
 3. **Comparing runs at a fixed simulation time.** t_cool differs by large factors
    between the Z, n and χ values on the poster, so at t = 0.1 the runs are at
    very different stages. Plot against the mean cloud temperature, or against
