@@ -45,3 +45,23 @@ def t_cool(d):
         with open(CACHE, "w") as f:
             json.dump(c, f, indent=0)
     return c[key]
+
+
+def t_cooled(d):
+    """End of the cooling phase of run d [Myr]: t_cool(d), or, if later, the first
+    time the cloud's own mass-weighted mean temperature falls below 3 x the
+    floor/equilibrium temperature.  A compressed cloud does not follow the
+    isochoric reference history and can finish cooling later.  (The mean is
+    used with 3 rather than 1.5 x T_eq because a nonlinear temperature
+    perturbation delays the mean of an otherwise isochoric cloud by a few per
+    cent; with 3 x T_eq uncompressed clouds end at t_cool(d).)"""
+    import numpy as np
+    import cooling as C
+    p = d["params"]
+    model = CM.make_model(p.get("cooling", "cie"), p["Z"])
+    if p.get("T_floor") is not None:
+        model.Tfloor = p["T_floor"]
+    T_end = 2 * LT.T_END_FACTOR * model.T_eq(p["chi"] * p["rho_bg"] * C.mp)
+    tf = t_cool(d)
+    i = np.nonzero(d["Tmean"] <= T_end)[0]
+    return max(tf, d["t"][i[0]]) if len(i) else tf

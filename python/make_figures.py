@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import cooling as C
 import linear_theory as LT
 import plutorun as P
-from metrics import t_cool as tc
+from metrics import t_cool as tc, t_cooled
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 RES = os.path.join(HERE, "..", "results")
@@ -231,7 +231,7 @@ def cloud_metrics(d):
     tf = tc(d)
     A = p["amp"]
     t = d["t"]
-    cool = t <= tf
+    cool = t <= t_cooled(d)      # until this cloud itself has cooled
     dx = p["box"] / p["nx"]
     compression = d["nmean"].max() / d["nmean"][0]
     return dict(

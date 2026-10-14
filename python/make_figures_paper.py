@@ -163,6 +163,18 @@ def fig_chi1_clouds():
                 a.loglog(mm["x"], mm["G_cool"] if which == "cool" else mm["G_end"], "o",
                          color=c, ms=5.5, mfc=c if ok else "none")
             _lt_lines(a, cool, which)
+            if which == "cool":
+                # small seeds: the same small clouds with A = 1e-3 (amplitude scan)
+                for d in runs("chi1_amplitude"):
+                    p = d["params"]
+                    if p["cooling"] != cool or p["amp"] != 1e-3 or p["rho_bg"] > 1e-3:
+                        continue
+                    mm = cloud_metrics(d)
+                    a.loglog(mm["x"], mm["G_cool"], "*", color=lcol(mm["Lx"]), ms=12,
+                             mec="k", mew=0.6)
+                a.axhline(1.3 / 0.02, color=INK2, lw=0.8, ls="-.")
+                a.text(20, 1.3 / 0.02 * 1.15, r"$\delta\rho/\rho\approx1.3$ for A$_0$ = 0.02",
+                       fontsize=7.5, color=INK2)
             a.set_title(f"{title}: " + ("max while cooling" if which == "cool"
                                          else "max by 2.5 t$_{cool}$ (2 t$_{cool}$ for lines)"))
             if row == 1:
@@ -172,7 +184,9 @@ def fig_chi1_clouds():
         a.set_ylabel(r"$|\delta\rho/\rho|/A_0$ of the seeded mode")
     h = [Line2D([], [], color=c, marker="o", ls="none", label=lab) for _, _, c, lab in LBINS]
     h += [Line2D([], [], color=INK2, marker="o", mfc="none", ls="none",
-                 label="< 10 cells/λ after collapse")]
+                 label="< 10 cells/λ after collapse"),
+          Line2D([], [], color=INK2, marker="*", ms=11, mec="k", ls="none",
+                 label="A$_0$ = 10$^{-3}$ (others: 0.02)")]
     ax[0, 1].legend(handles=h, fontsize=7.5, loc="upper right")
     ax[0, 0].set_ylim(0.5, 5e3)
     save(fig, "figP_chi1_clouds.png")
