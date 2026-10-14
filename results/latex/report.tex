@@ -39,10 +39,14 @@ growth is controlled by $x=\lambda/(\cstc)$ and $L/(\cstc)$. Per e-fold of
 cooling, a short-wavelength perturbation grows by as many e-folds as one in a
 medium with state-independent heating grows per cooling time; but a cooling gas has
 only $\approx4$ e-folds of temperature to traverse, so the amplification is finite
-($\lesssim10^2$ in an infinite medium). This short-wavelength behaviour was known
-for power-law cooling \citep{field65,balbus86,burkert00}; here it is extended to
-realistic cooling with and without a UV background, to all wavelengths, to finite
-cooling regions, and through the evolution after the gas has cooled. Much of it happens after the gas has cooled. After that the
+($\lesssim10^2$ in an infinite medium). The approach, linear equations integrated
+along a cooling background without heating and checked against 1D simulations,
+follows \citet{schwarz72}, who applied it to interstellar gas cooling from 8200\,K;
+the short-wavelength growth law and the existence of a threshold seed amplitude are
+also known for power-law cooling \citep{field65,balbus86,burkert00}. Here the
+problem is worked out for the circumgalactic medium (cooling from $10^6$\,K with
+realistic collisional and photoionization-equilibrium cooling), for finite cooling
+regions, and through the evolution long after the gas has cooled. Much of it happens after the gas has cooled. After that the
 perturbation becomes a sound wave in the cold gas, which in the UV background
 damps away.
 \end{abstract}
@@ -67,8 +71,22 @@ heating in every layer, cold gas condenses only where $t_{\rm TI}/t_{\rm ff}\les
 and buoyancy saturates the growth. \citet{das21}, our main comparison, include
 metallicity gradients and fluctuations in a uniform, heated medium.
 
-\paragraph{Perturbations on a cooling background.} The no-heating case also goes
-back to \citet{field65}: in his \S VI a static medium with $\mathcal{L}\propto\rho
+\paragraph{Perturbations on a cooling background.} The closest precedent for this
+work is \citet{schwarz72}. For interstellar gas cooling at constant density from
+8200\,K without heating, they integrated the linearized equations with
+time-dependent coefficients (their \S IV), obtained the short-wavelength law
+$d\ln n_1/dt=(2-s_T)/(\gamma\tau_c)$ and its integral $n_1\propto(T_0/T)^{(2-s_T)/\gamma}$
+for constant slope $s_T$ (their eqs.~26--30; our Eqs.~\ref{eq:perefold} and
+\ref{eq:timeshift}), compared it with the heated rate $(1-s_T)/(\gamma\tau_c)$, found
+that long wavelengths keep growing ``long after the instability shuts off'' through
+the inertia of the flow, and verified all of this with 1D simulations. They also
+identified a threshold: ``an initial perturbation of minimum amplitude (between 5
+and 10 percent) is needed'' for a large final contrast, which they called ``a key
+difference between instability in a medium in equilibrium, and instability in a
+cooling medium.'' \citet{mathews78} integrated the same short-wavelength law along
+the compressing, cooling parcels of a steady cooling flow (our isobaric background)
+and found growth factors of $10^{4\pm1}$. The no-heating case goes back to
+\citet{field65}: in his \S VI a static medium with $\mathcal{L}\propto\rho
 T^N$ and no heat input has growing condensations for $N<2$, compared with $N<1$
 for a medium heated at a rate per unit mass independent of $\rho$ and $T$. The
 general Lagrangian solution of \citet{balbus86} (his eq.~23) gives the
@@ -103,20 +121,20 @@ by cooling fragment (``shatter'') only if their final density contrast exceeds
 $\sim300$, whether or not the initial contrast was linear
 \citep{mccourt18,gronke20}.
 
-\paragraph{What is new here.} Our short-wavelength growth law is the explicit
-integral of \citet{balbus86} for an arbitrary $\Lambda(T)$, and \citet{burkert00}
-already established finite amplification and a seed-dependent threshold for
-power-law cooling. The new elements are:
+\paragraph{What is new here.} The method, the short-wavelength growth law, continued
+growth at long wavelengths and the threshold amplitude are all in
+\citet{schwarz72}, for interstellar gas cooling from 8200\,K; \citet{burkert00}
+treated power-law cooling analytically. The new elements are:
 \begin{itemize}
-\item the full linear problem at all wavelengths, integrated along realistic CIE
-  and photoionization-equilibrium cooling histories to the floor or $\Teq$, with
-  the amplification and the minimum seed amplitude as functions of
-  $\lambda/(\cstc)$ and density;
+\item the hot ($10^6$\,K) circumgalactic regime, with Cloudy cooling with and without
+  the UV background, giving the amplification and the minimum seed amplitude as
+  functions of $\lambda/(\cstc)$ and density, and the comparison with the heated
+  medium of \citet{das21};
 \item finite cooling regions embedded in non-cooling gas ($\chi=1$ clouds), and
-  where the isobaric (small-cloud) limit breaks down;
-\item the long-wavelength regime, where the density grows after cooling as
-  $G-1\approx24(\cstc/\lambda)^2$, rather than being erased as \citet{burkert00}
-  suggested for $K\lesssim1$;
+  where the isobaric (small-cloud) limit of \citet{mathews78} breaks down;
+\item a quantitative law for the long-wavelength regime, $G-1\approx24(\cstc/\lambda)^2$
+  by $2.5\,\tcool$ (continued growth, as \citealt{schwarz72} found, rather than the
+  erasure \citealt{burkert00} suggested for $K\lesssim1$);
 \item the evolution after cooling for up to $10^3\,\tcool$: sound waves in the cold
   gas that persist with a floor and damp with a UV background;
 \item the temperature perturbation, which becomes nonlinear at the end of cooling
@@ -124,7 +142,8 @@ power-law cooling. The new elements are:
   \citep[contrast][who find non-isobaric behaviour only in the nonlinear regime of a
   heated gas]{waters19};
 \item temperature, sound-wave, velocity and metallicity seeds alongside density seeds;
-\item validation of all of this against gPLUTO simulations.
+\item systematic validation against gPLUTO simulations, including the numerical
+  mixing of the cooling switch at cloud edges.
 \end{itemize}
 
 %======================================================================
@@ -383,7 +402,7 @@ isochoric background $d\ln T/dt=-1/\tcool$, so Eq.~(\ref{eq:isobaric}) becomes
 \qquad\Bigl(\text{isobaric background: }2-\LT\Bigr),
 \label{eq:perefold}
 \end{equation}
-which integrates to Eq.~(\ref{eq:timeshift}); it is the explicit form of
+which integrates to Eq.~(\ref{eq:timeshift}). This is eq.~27 of \citet{schwarz72}; it is also the explicit form of
 \citet{balbus86}'s eq.~23 for $\mathcal{L}=n^2\Lambda(T)$, and for $\Lambda\propto
 T^\beta$ it reduces to eq.~22 of \citet{burkert00}. \textbf{Per e-fold of cooling, the
 perturbation gains $(2-\LT)/\gamma$ e-folds: exactly the number of e-folds a
@@ -399,7 +418,9 @@ set by the shape of $\Lambda(T)$, not by time.
 
 One consequence is a question that does not arise in a heated medium: \emph{how
 large must a seed be to go nonlinear?} With steady exponential growth any seed
-eventually does, given enough cooling times. \citet{das21} accordingly seed their
+eventually does, given enough cooling times. \citet{schwarz72} made exactly this
+point for interstellar gas cooling from 8200\,K, where they needed seeds of
+5--10\%. \citet{das21} accordingly seed their
 nonlinear runs with $\drho=10^{-5}$ ($10^{-4}$ in the high-resolution runs) and let
 them grow; they do not map a threshold amplitude. Their only test with large
 initial amplitude, a square-wave density pulse, shows that nonlinear seeds erase
@@ -742,7 +763,8 @@ same inertial growth after their isobaric-to-isochoric transition (their eq.~27)
 but for perturbations that start isochoric ($K\lesssim1$, i.e.\ $x\gtrsim5$) they
 expected the reversed pressure gradient to erase the fluctuation once the gas had
 cooled. With a floor at $10^4$\,K we find instead continued growth for many cooling
-times (Figure~\ref{fig:validation}).
+times (Figure~\ref{fig:validation}), as \citet{schwarz72} found for interstellar
+gas.
 
 \begin{figure}[H]
 \centering
@@ -1139,12 +1161,16 @@ Hennebelle, P., \& P\'erault, M. 2000, A\&A, 359, 1124
 Koyama, H., \& Inutsuka, S. 2000, ApJ, 532, 980
 \bibitem[McCourt et al.(2012)]{mccourt12}
 McCourt, M., Sharma, P., Quataert, E., \& Parrish, I.~J. 2012, MNRAS, 419, 3319
+\bibitem[Mathews \& Bregman(1978)]{mathews78}
+Mathews, W.~G., \& Bregman, J.~N. 1978, ApJ, 224, 308
 \bibitem[Mohapatra et al.(2023)]{mohapatra23}
 Mohapatra, R., Sharma, P., Federrath, C., \& Quataert, E. 2023, MNRAS, 525, 3831
 \bibitem[Pizzolato \& Soker(2005)]{pizzolato05}
 Pizzolato, F., \& Soker, N. 2005, ApJ, 632, 821
 \bibitem[S\'anchez-Salcedo et al.(2002)]{sanchez02}
 S\'anchez-Salcedo, F.~J., V\'azquez-Semadeni, E., \& Gazol, A. 2002, ApJ, 577, 768
+\bibitem[Schwarz et al.(1972)]{schwarz72}
+Schwarz, J., McCray, R., \& Stein, R.~F. 1972, ApJ, 175, 673
 \bibitem[Sharma et al.(2012)]{sharma12}
 Sharma, P., McCourt, M., Quataert, E., \& Parrish, I.~J. 2012, MNRAS, 420, 3174
 \bibitem[Waters \& Proga(2019)]{waters19}
