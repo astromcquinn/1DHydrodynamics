@@ -277,7 +277,14 @@ at equilibrium, which makes it easier to compress than gas held at a floor.
 
 ![validation uvb](figures/fig13_validation_uvb.png)
 
-{{LINEAR_UVB}}
+**Linear theory (Fig. 14).** For an infinite medium starting at 10⁶ K, the
+amplification with the UV background is within ~25% of Cloudy CIE with a floor
+at every density from 10⁻⁴ to 10⁻², both while cooling and by 3 t_cool. At
+x ≈ 0.3, for example, it is 10–13 while cooling and 50–67 by 3 t_cool, against
+10 and 59 for Cloudy CIE. For small isobaric clouds the totals by 3 t_cool also
+agree to ~25% (1.4–1.8×10³ at x ≈ 0.3), although at n = 10⁻² more of the growth
+happens before the gas reaches 1.5 T_eq. Starting from 5×10⁵ K gives the same
+picture.
 
 ![linear uvb](figures/fig14_linear_uvb.png)
 
@@ -361,7 +368,16 @@ What grows is the entropy (cooling-time) perturbation:
   as much as a density seed (1.3 A, which barely grows), while temperature and
   metallicity seeds give only 0.3 A and 0.1 A.
 
-{{PERT_LT}}
+The linear-theory survey (Fig. 19) confirms this ordering across wavelengths.
+By 3 t_cool, the amplification relative to A is:
+
+| x = λ/(c_s t_cool) | density | temperature | metallicity | sound | velocity |
+|---|---|---|---|---|---|
+| ≈ 0.15 | 93 | 50 | 32 | 10 | 8.5–9 |
+| ≈ 1.5 | 15 | 11 | 5.3 | 3.8 | 1.5 |
+| ≈ 15 | 1.2 | 0.19 | 0.07 | 1.0 | 0.9 |
+
+The values with and without the UV background agree to within ~5%.
 
 ![pert linear](figures/fig19_pert_linear_survey.png)
 
