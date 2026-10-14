@@ -14,9 +14,16 @@
   L_CLOUD <= 0: "infinite cloud": the whole (periodic) box is filled with
                 gas of density CHI*RHO_BG and temperature T_BG/CHI.
 
-  Inside the cloud the density carries an isobaric perturbation
-      delta rho / rho = AMP * cos(2 pi (x - x_c)/LAMBDA + PHASE)
-  (pressure uniform, temperature perturbed in the opposite sense).
+  Inside the cloud a sinusoidal perturbation of type PERT_TYPE is added, with
+  c(x) = cos(2 pi (x - x_c)/LAMBDA + PHASE), s(x) = sin(...):
+    0  density, isobaric:     delta rho/rho = AMP c,  delta p = 0
+    1  temperature, isochoric: delta T/T = delta p/p = AMP c,  delta rho = 0
+    2  standing sound wave:   delta rho/rho = AMP c,  delta p/p = gamma AMP c
+    3  velocity:              v = AMP c_s s  (c_s of the unperturbed cloud gas)
+    4  metallicity:           delta Z/Z = AMP c at uniform rho and p
+  Tracer 2 carries the metallicity Z (solar units, ZMET in the cloud); it is
+  used by radiat.cpp when the 2D table stores primordial and metal rates
+  separately.
 
   Thermal model of the background (two options, can be combined):
    COOL_MASK = 1 : cooling is multiplied by the passive tracer, so only cloud
@@ -67,13 +74,27 @@ void Init (double *v, double x1, double x2, double x3, RunConfig &run_config)
     else                     f = (d < 0.0 ? 1.0 : 0.0);
   }
 
-  double pert = p[AMP]*cos(2.0*CONST_PI*(x1 - xc)/p[LAMBDA] + p[PHASE]);
-  double rho_c = p[CHI]*rho_bg*(1.0 + pert);
+  double phase = 2.0*CONST_PI*(x1 - xc)/p[LAMBDA] + p[PHASE];
+  double c = cos(phase), s = sin(phase);
+  double A = p[AMP];
+  int    type = (int)(p[PERT_TYPE] + 0.5);
+  double g = run_config.gamma;
+
+  double drho = 0.0, dprs = 0.0, vel = 0.0, dZ = 0.0;
+  if      (type == 0) drho = A*c;
+  else if (type == 1) dprs = A*c;
+  else if (type == 2) { drho = A*c; dprs = g*A*c; }
+  else if (type == 3) vel = A*sqrt(g*prs/(p[CHI]*rho_bg))*s;
+  else if (type == 4) dZ = A*c;
+
+  double rho_c = p[CHI]*rho_bg*(1.0 + drho);
 
   v[RHO] = rho_bg + f*(rho_c - rho_bg);
-  v[VX1] = v[VX2] = v[VX3] = 0.0;
-  v[PRS] = prs;
-  v[TRC] = f;
+  v[VX1] = f*vel;
+  v[VX2] = v[VX3] = 0.0;
+  v[PRS] = prs*(1.0 + f*dprs);
+  v[TRC]     = f;
+  v[TRC + 1] = p[ZMET]*(1.0 + f*dZ);
 }
 
 ////////////////////////////////////////////////////////////////////////

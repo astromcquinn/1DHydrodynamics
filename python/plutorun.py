@@ -76,23 +76,28 @@ MAX_COOL_RATE   {max_cool:.8g}
 PHASE           {phase:.8g}
 COOL_MASK       {cool_mask:d}
 COOL_MODE       {cool_mode:d}
+PERT_TYPE       {pert_type:d}
+ZMET            {zmet:.8g}
 """
 
 
-def read_dbl(path, nx, nvar=6):
+PERT_TYPES = {"density": 0, "temperature": 1, "sound": 2, "velocity": 3, "metal": 4}
+
+
+def read_dbl(path, nx):
     a = np.fromfile(path, dtype="<f8")
-    return a.reshape(nvar, nx)  # rho vx1 vx2 vx3 prs tr1
+    return a.reshape(a.size // nx, nx)  # rho vx1 vx2 vx3 prs tr1 [tr2 = Z]
 
 
 class Run:
     def __init__(self, name, rho_bg=0.01, T_bg=1e6, chi=1.0, L_cloud=-1.0,
                  lam=10.0, Z=0.3, amp=1e-3, heat_mode="none", cool_mask=None,
-                 T_floor=None, cooling="cie", nx=None, box=None, edge=0.0, phase=0.0,
+                 T_floor=None, cooling="cie", pert="density", nx=None, box=None, edge=0.0, phase=0.0,
                  tstop=None, nout=100, tstop_factor=1.6, cfl=0.4,
                  max_cool=0.05, outdir="../results/runs", keep_raw=False):
         self.p = dict(name=name, rho_bg=rho_bg, T_bg=T_bg, chi=chi,
                       L_cloud=L_cloud, lam=lam, Z=Z, amp=amp,
-                      heat_mode=heat_mode, cooling=cooling, edge=edge,
+                      heat_mode=heat_mode, cooling=cooling, pert=pert, edge=edge,
                       phase=phase, cfl=cfl, max_cool=max_cool)
         self.infinite = L_cloud <= 0
         if cool_mask is None:   # default: cooling off outside the cloud
@@ -114,8 +119,10 @@ class Run:
         else:
             self.p["heat"] = 0.0
         # reference (unperturbed) isochoric history of the cloud gas
+        if pert == "metal" and not hasattr(self.model, "dL_dlnZ"):
+            raise ValueError('metal perturbations need a split table, e.g. cooling="pie_z"')
         ref = LT.integrate(n_c, T_c, lam, model=self.model, background="isochoric",
-                           amp=0.0, heat=self.p["heat"])
+                           amp=0.0, heat=self.p["heat"], stop_factor=LT.T_END_FACTOR)
         self.t_floor_iso = ref["t"][-1]                       # Myr
         self.tcool0 = ref["tcool0_Myr"]
         self.cs_tcool0 = ref["cs_tcool0_kpc"]
@@ -140,7 +147,8 @@ class Run:
                               heat=self.p["heat"], T_floor=T_floor,
                               max_cool=max_cool, phase=phase,
                               cool_mask=self.p["cool_mask"],
-                              cool_mode=self.model.cool_mode)
+                              cool_mode=self.model.cool_mode,
+                              pert_type=PERT_TYPES[pert], zmet=Z)
         self.outdir = outdir
         self.keep_raw = keep_raw
 
@@ -175,7 +183,10 @@ class Run:
         times = np.array(times) * C.UNIT_T / C.Myr
         dx = self.p["box"] / nx
         keys = ["t", "Tmean", "pmean", "nmean", "amp_mode", "amp_mode_p",
+                "amp_mode_T", "amp_mode_K", "amp_mode_v", "amp_mode_Z",
                 "amp_h2", "amp_max", "amp_rms", "size", "nmax_over_nmean"]
+        g = C.GAMMA
+        cs0 = np.sqrt(g * C.kB * self.p["T_bg"] / self.p["chi"] / (C.MU * C.amu)) / C.UNIT_V
         ts = {k: [] for k in keys}
         prof_idx = np.unique(np.linspace(0, len(times) - 1, 12).astype(int))
         profiles = []
@@ -212,12 +223,28 @@ class Run:
                            np.cos(2 * km * mm), np.sin(2 * km * mm)]).T
             cr, *_ = np.linalg.lstsq(A, dr, rcond=None)
             cp, *_ = np.linalg.lstsq(A, pr, rcond=None)
+            # other fields: relative perturbations of T, entropy K = p/rho^g,
+            # velocity (in units of the initial cloud sound speed) and Z
+            Tin = T[sel][inner]
+            cT, *_ = np.linalg.lstsq(A, Tin, rcond=None)
+            lnK = np.log(pr) - g * np.log(dr)
+            cK, *_ = np.linalg.lstsq(A, lnK - lnK.mean(), rcond=None)
+            cv, *_ = np.linalg.lstsq(A, vx[sel][inner], rcond=None)
+            if V.shape[0] > 6:
+                cZ, *_ = np.linalg.lstsq(A, V[6][sel][inner], rcond=None)
+                ampZ = np.hypot(cZ[1], cZ[2]) / cZ[0] * np.sign(cZ[1]) if cZ[0] > 0 else 0.0
+            else:
+                ampZ = 0.0
             ts["t"].append(t)
             ts["Tmean"].append(Tmean)
             ts["pmean"].append(pmean)
             ts["nmean"].append(nmean)
             ts["amp_mode"].append(np.hypot(cr[1], cr[2]) / cr[0] * np.sign(cr[1]))
             ts["amp_mode_p"].append(np.hypot(cp[1], cp[2]) / cp[0] * np.sign(cp[1]))
+            ts["amp_mode_T"].append(np.hypot(cT[1], cT[2]) / cT[0] * np.sign(cT[1]))
+            ts["amp_mode_K"].append(np.hypot(cK[1], cK[2]) * np.sign(cK[1]))
+            ts["amp_mode_v"].append(np.hypot(cv[1], cv[2]) / cs0 * np.sign(cv[2]))
+            ts["amp_mode_Z"].append(ampZ)
             ts["amp_h2"].append(np.hypot(cr[3], cr[4]) / cr[0])
             ts["amp_max"].append(dr.max() / dr.mean() - 1)
             ts["amp_rms"].append(np.std(dr) / dr.mean())

@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import cooling as C
 import linear_theory as LT
 import plutorun as P
+from metrics import t_cool as tc
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 RES = os.path.join(HERE, "..", "results")
@@ -141,7 +142,7 @@ def fig_linear_maps():
         a.set_title(title + r", $T_0=10^6$ K")
     ax[0].set_ylabel(r"amplification $|\delta\rho/\rho|/A_0$")
     ax[0].legend(fontsize=8, loc="upper right")
-    ax[1].text(0.04, 3e3, "solid: max during cooling to $10^4$ K\ndotted: max by $3\\,t_{floor}$ (incl. ballistic phase)",
+    ax[1].text(0.04, 3e3, "solid: max while cooling (to 1.5 T$_{floor}$)\ndotted: max by $3\\,t_{cool}$ (incl. ballistic phase)",
                fontsize=8, color=INK2, va="top")
     for a in ax:
         a.set_xlim(0.02, 400)
@@ -205,7 +206,7 @@ def fig_infinite_sims():
                 if p["Z"] != Z or p["amp"] != A:
                     continue
                 x = p["lam"] / d["cs_tcool0"]
-                tf = d["t_floor_iso"]
+                tf = tc(d)
                 cool = d["t"] <= tf
                 pts.append((x, np.abs(d["amp_mode"][cool]).max() / A,
                             np.abs(d["amp_mode"]).max() / A,
@@ -229,7 +230,7 @@ def fig_infinite_sims():
 # ---------------------------------------------------------------------------
 def cloud_metrics(d):
     p = d["params"]
-    tf = d["t_floor_iso"]
+    tf = tc(d)
     A = p["amp"]
     t = d["t"]
     cool = t <= tf
@@ -238,7 +239,7 @@ def cloud_metrics(d):
     return dict(
         Lx=p["L_cloud"] / d["cs_tcool0"], x=p["lam"] / d["cs_tcool0"],
         G_cool=np.abs(d["amp_mode"][cool]).max() / A,
-        G_end=np.abs(d["amp_mode"]).max() / A,
+        G_end=np.abs(d["amp_mode"][t <= 2.5 * tf]).max() / A,
         student=d["nmax_over_nmean"].max(),
         inner_max=d["amp_max"].max(), Z=p["Z"], n=p["rho_bg"], L=p["L_cloud"],
         nw=p["L_cloud"] / p["lam"], chi=p["chi"],
@@ -284,7 +285,7 @@ def fig_cloud():
         a.set_ylim(0.8, 3e3)
     ax[0].set_ylabel(r"max $|\delta\rho/\rho|/A_0$ of seeded mode")
     ax[0].set_title("Cloud runs: growth while cooling to 10$^4$ K")
-    ax[1].set_title("Including post-cooling phase (to 2.5 $t_{floor}$)")
+    ax[1].set_title("Including post-cooling phase (to 2.5 $t_{cool}$)")
     ax[2].set_xlabel(r"interior max $\rho/\bar\rho - 1$ (edges excluded)")
     ax[2].set_ylabel(r"whole-cloud max$(\rho)/\bar\rho - 1$ (incl. edges)")
     lim = [1e-2, 1e2]
@@ -310,13 +311,13 @@ def fig_isochoric():
         m = cloud_metrics(d)
         if m["Lx"] < 1.5 or m["x"] < 1.5:
             continue
-        tf = d["t_floor_iso"]
+        tf = tc(d)
         cool = d["t"] <= 0.95 * tf
         pts.append((m["x"], m["G_cool"] - 1, m["G_end"] - 1,
                     np.abs(d["amp_mode_p"][cool]).max() / m_amp(d)))
     pts = np.array(sorted(pts))
     fig, ax = plt.subplots(1, 2, figsize=(10, 3.9))
-    ax[0].loglog(pts[:, 0], pts[:, 3], "o", color=S2, ms=5, label=r"$|\delta T/T|$ = $|\delta p/p|$, max before floor")
+    ax[0].loglog(pts[:, 0], pts[:, 3], "o", color=S2, ms=5, label=r"$|\delta T/T|$ = $|\delta p/p|$, max before end of cooling")
     ax[0].loglog(pts[:, 0], np.maximum(pts[:, 1], 1e-3) + 1, "o", color=S1, ms=5, mfc="none",
                  label=r"$|\delta\rho/\rho|$, max while cooling")
     ax[0].axhline(1, color=INK2, lw=0.8, ls="--")
@@ -325,8 +326,8 @@ def fig_isochoric():
     ax[0].set_title("While cooling: T and p grow, density does not")
     ax[0].legend(fontsize=8)
     xx = np.logspace(np.log10(1.5), np.log10(500), 50)
-    ax[1].loglog(pts[:, 0], pts[:, 2], "o", color=S1, ms=5, label="cloud runs, by 2.5 t$_{floor}$")
-    ax[1].loglog(xx, 50 / xx**2, color=INK2, lw=1, ls="--", label=r"$50\,(c_s t_{cool}/\lambda)^2$")
+    ax[1].loglog(pts[:, 0], pts[:, 2], "o", color=S1, ms=5, label="cloud runs, by 2.5 t$_{cool}$")
+    ax[1].loglog(xx, 25 / xx**2, color=INK2, lw=1, ls="--", label=r"$25\,(c_s t_{cool}/\lambda)^2$")
     ax[1].set_xlabel(r"$\lambda_0/(c_s t_{cool})_0$")
     ax[1].set_ylabel(r"$G - 1$ (density growth)")
     ax[1].set_title("Afterwards: density grows from the pressure imprint")
@@ -379,17 +380,18 @@ def fig_amplitude():
             for d in R:
                 p = d["params"]
                 if p["rho_bg"] == n and p["amp"] == A:
-                    tf = d["t_floor_iso"]
-                    a.semilogy(d["t"] / tf, d["amp_rms"] / (A / np.sqrt(2)), color=c,
+                    tf = tc(d)
+                    k = d["t"] <= 3 * tf
+                    a.semilogy(d["t"][k] / tf, d["amp_rms"][k] / (A / np.sqrt(2)), color=c,
                                lw=1.5, label=f"A$_0$ = {A:g}")
                     Lx = p["L_cloud"] / d["cs_tcool0"]
         a.set_title(f"n$_{{bg}}$ = {n:g}: L/(c$_s$t$_{{cool}}$) = {Lx:.2g}")
-        a.set_xlabel(r"t / t$_{floor}$")
+        a.set_xlabel(r"t / t$_{cool}$")
         a.axvline(1, color=GRID, lw=1)
     ax[0].set_ylabel(r"rms $\delta\rho/\rho$ (cloud interior) / initial rms")
     ax[0].set_ylim(1e-2, 1e4)
     ax[0].legend(fontsize=8)
-    ax[0].text(1.25, 2e3, "after ~t$_{floor}$ the collapsed\ncloud spans < 10 cells:\nsee resolution study", fontsize=7.5, color=INK2)
+    ax[0].text(1.25, 2e3, "after ~t$_{cool}$ the collapsed\ncloud spans < 10 cells:\nsee resolution study", fontsize=7.5, color=INK2)
     save(fig, "fig8_amplitude_scan.png")
 
 
@@ -402,12 +404,12 @@ def fig_heating():
         for c, mode in zip([S1, S2, S3], ["mask", "balance", "both"]):
             for d in R:
                 if d["params"]["rho_bg"] == n and d["params"]["name"].endswith(mode):
-                    tf = d["t_floor_iso"]
+                    tf = tc(d)
                     a.semilogy(d["t"] / tf, np.abs(d["amp_mode"]) / 0.02, color=c, label={
                         "mask": "cooling off outside cloud",
                         "balance": "heating = background cooling",
                         "both": "both"}[mode])
-        a.set_xlabel(r"t / t$_{floor}$")
+        a.set_xlabel(r"t / t$_{cool}$")
         a.set_title(f"n$_{{bg}}$ = {n:g}, L = 50 kpc, Z = 0.3, χ = 2")
     ax[0].set_ylabel(r"$|\delta\rho/\rho|/A_0$ (seeded mode)")
     ax[0].legend(fontsize=8)
@@ -429,10 +431,11 @@ def fig_resolution():
         for lab, d, c in sets:
             if d is None:
                 continue
-            tf = d["t_floor_iso"]
-            a.semilogy(d["t"] / tf, np.maximum(d["amp_max"], 1e-4), color=c, lw=1.5, label=lab)
+            tf = tc(d)
+            k = d["t"] <= 3 * tf
+            a.semilogy(d["t"][k] / tf, np.maximum(d["amp_max"][k], 1e-4), color=c, lw=1.5, label=lab)
         a.set_title(f"Small cloud (L/c$_s$t$_{{cool}}$ ≈ 0.9), A$_0$ = {A:g}")
-        a.set_xlabel(r"t / t$_{floor}$")
+        a.set_xlabel(r"t / t$_{cool}$")
         a.set_ylim(1e-4, 1e2)
     ax[0].set_ylabel(r"interior max $\rho/\bar\rho - 1$")
     ax[0].legend(fontsize=8)

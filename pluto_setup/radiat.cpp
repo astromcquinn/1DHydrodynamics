@@ -15,9 +15,13 @@
                   written by python/cooling_models.py).  Bilinear interpolation
                   of log10(rate) in (log n_H, log T); net loss
                   n_H^2 (Lambda_cool - Lambda_heat).
-                  File format:  nn nT / nn values of log n_H / nT values of
-                  log T / nn rows of log10 cooling / nn rows of log10 heating
-                  (-99 for zero).
+                  File format:  nn nT ncomp / nn values of log n_H / nT values
+                  of log T / ncomp blocks of nn rows of log10(rate) (-99 for 0).
+                  ncomp = 2: total cooling, total heating (fixed Z);
+                  ncomp = 4: primordial cooling, solar-metal cooling,
+                  primordial heating, solar-metal heating, combined with the
+                  local metallicity Z carried by tracer 2:
+                  rate = primordial + Z * metal.
 
   Common to both:
    - a uniform constant volumetric heating inputParam[HEAT_CGS]
@@ -31,26 +35,31 @@
 ////////////////////////////////////////////////////////////////////////
 #include "gpluto.hpp"
 
-static int     g2_nn = 0, g2_nT = 0;
-static double *g2_logn = NULL, *g2_logT = NULL, *g2_lc = NULL, *g2_lh = NULL;
+static int     g2_nn = 0, g2_nT = 0, g2_nc = 2;
+static double *g2_logn = NULL, *g2_logT = NULL, *g2_tab[4] = {NULL, NULL, NULL, NULL};
 
 static void Read2DTable(void)
 {
+  char line[256];
   FILE *fp = fopen("cooltable2d.dat", "r");
   if (fp == NULL) QuitPLUTO("! Radiat(): cooltable2d.dat could not be found", 1);
-  if (fscanf(fp, "%d %d", &g2_nn, &g2_nT) != 2) QuitPLUTO("! Radiat(): bad cooltable2d.dat header", 1);
+  if (fgets(line, sizeof(line), fp) == NULL) QuitPLUTO("! Radiat(): empty cooltable2d.dat", 1);
+  int nread = sscanf(line, "%d %d %d", &g2_nn, &g2_nT, &g2_nc);
+  if (nread < 2) QuitPLUTO("! Radiat(): bad cooltable2d.dat header", 1);
+  if (nread == 2) g2_nc = 2;
+  if (g2_nc != 2 && g2_nc != 4) QuitPLUTO("! Radiat(): ncomp must be 2 or 4", 1);
   g2_logn = (double *) malloc(g2_nn*sizeof(double));
   g2_logT = (double *) malloc(g2_nT*sizeof(double));
-  g2_lc   = (double *) malloc(g2_nn*g2_nT*sizeof(double));
-  g2_lh   = (double *) malloc(g2_nn*g2_nT*sizeof(double));
   int ok = 1;
   for (int i = 0; i < g2_nn; i++) ok &= fscanf(fp, "%lf", g2_logn + i) == 1;
   for (int j = 0; j < g2_nT; j++) ok &= fscanf(fp, "%lf", g2_logT + j) == 1;
-  for (int k = 0; k < g2_nn*g2_nT; k++) ok &= fscanf(fp, "%lf", g2_lc + k) == 1;
-  for (int k = 0; k < g2_nn*g2_nT; k++) ok &= fscanf(fp, "%lf", g2_lh + k) == 1;
+  for (int c = 0; c < g2_nc; c++) {
+    g2_tab[c] = (double *) malloc(g2_nn*g2_nT*sizeof(double));
+    for (int k = 0; k < g2_nn*g2_nT; k++) ok &= fscanf(fp, "%lf", g2_tab[c] + k) == 1;
+  }
   fclose(fp);
   if (!ok) QuitPLUTO("! Radiat(): cooltable2d.dat is truncated", 1);
-  printLog (" > Read 2D cooling table (%d x %d)\n", g2_nn, g2_nT);
+  printLog (" > Read 2D cooling table (%d x %d, %d components)\n", g2_nn, g2_nT, g2_nc);
 }
 
 static int Locate(const double *a, int n, double x)
@@ -117,9 +126,16 @@ void Radiat (double *v, double *rhs, RunConfig& run_conf)
     }
     loss = ne*nH*lam;
   } else {
-    if (g2_lc == NULL) Read2DTable();
+    if (g2_tab[0] == NULL) Read2DTable();
     double x = log10(nH), y = log10(T);
-    loss = nH*nH*(pow(10.0, Bilinear(g2_lc, x, y)) - pow(10.0, Bilinear(g2_lh, x, y)));
+    if (g2_nc == 2) {
+      loss = nH*nH*(pow(10.0, Bilinear(g2_tab[0], x, y)) - pow(10.0, Bilinear(g2_tab[1], x, y)));
+    } else {
+      double Z = MAX(v[TRC + 1], 0.0);
+      double cool = pow(10.0, Bilinear(g2_tab[0], x, y)) + Z*pow(10.0, Bilinear(g2_tab[1], x, y));
+      double heat = pow(10.0, Bilinear(g2_tab[2], x, y)) + Z*pow(10.0, Bilinear(g2_tab[3], x, y));
+      loss = nH*nH*(cool - heat);
+    }
   }
 
   if (run_conf.inputParam[COOL_MASK] > 0.5) {

@@ -9,6 +9,9 @@ Parameter sweeps of gPLUTO runs (parallel, resumable).
     python sweep.py resolution    # resolution study of a small (isobaric) cloud
     python sweep.py infinite_uvb cloud_uvb amplitude_uvb
                                   # same with a photoionising UV background
+    python sweep.py pert_infinite pert_cloud
+                                  # density, temperature, sound, velocity and
+                                  # metallicity seeds
 
 Each run is written to ../results/runs/<sweep>/<name>.npz; existing files are
 skipped, so an interrupted sweep can simply be restarted.
@@ -125,7 +128,7 @@ def resolution_runs():
 
 
 def cs_tcool_model(n, T, Z, cooling):
-    m = CM.make_model(cooling, Z)
+    m = CM.make_model(cooling, Z)   # noqa: same for the "_z" variants
     rho = n * C.mp
     tc = C.p_of(rho, T) / (C.GAMMA - 1) / m.net(rho, T)
     return C.cs_of(T) * tc / C.kpc
@@ -168,7 +171,37 @@ def amplitude_uvb_runs():
             for kw in amplitude_runs()]
 
 
-SWEEPS = dict(infinite_uvb=infinite_uvb_runs, cloud_uvb=cloud_uvb_runs,
+PERTS = ["density", "temperature", "sound", "velocity", "metal"]
+
+
+def pert_infinite_runs():
+    """Different kinds of seed perturbation, infinite medium, Cloudy tables
+    with (pie_z) and without (ciecl_z) a UV background."""
+    runs = []
+    n, T, Z = 1e-3, 1e6, 0.3
+    for cool, pt, x, A in itertools.product(["ciecl_z", "pie_z"], PERTS,
+                                            [0.1, 1.0, 10.0], [1e-3, 0.1]):
+        lam = x * cs_tcool_model(n, T, Z, cool)
+        name = f"pinf_{cool}_{pt}_x{_fmt(x)}_A{_fmt(A)}"
+        runs.append(dict(name=name, rho_bg=n, T_bg=T, chi=1.0, L_cloud=-1,
+                         lam=lam, Z=Z, amp=A, nx=512, tstop_factor=3.0,
+                         nout=150, cooling=cool, pert=pt))
+    return runs
+
+
+def pert_cloud_runs():
+    runs = []
+    for cool, pt, nbg in itertools.product(["ciecl_z", "pie_z"], PERTS, [1e-3, 1e-2]):
+        L, nw = 50.0, 4.5
+        name = f"pcl_{cool}_{pt}_n{_fmt(nbg)}"
+        runs.append(dict(name=name, rho_bg=nbg, T_bg=1e6, chi=2.0, L_cloud=L,
+                         lam=L / nw, Z=0.3, amp=0.02, nx=2048, box=3 * L,
+                         tstop_factor=2.5, nout=120, cooling=cool, pert=pt))
+    return runs
+
+
+SWEEPS = dict(pert_infinite=pert_infinite_runs, pert_cloud=pert_cloud_runs,
+              infinite_uvb=infinite_uvb_runs, cloud_uvb=cloud_uvb_runs,
               amplitude_uvb=amplitude_uvb_runs, resolution=resolution_runs, infinite=infinite_runs, cloud=cloud_runs, amplitude=amplitude_runs,
               scaling=scaling_runs, heating=heating_runs)
 

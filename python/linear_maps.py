@@ -30,11 +30,12 @@ BGS = ["isochoric", "isobaric"]
 def one(args):
     Z, T0, x, bg = args
     tab = C.CoolingTable.for_Z(Z)
-    ref = LT.integrate(N0, T0, 1.0, table=tab, background=bg, amp=0.0)
-    tf = ref["t"][-1]                                   # time to reach the floor
+    ref = LT.integrate(N0, T0, 1.0, Z=Z, table=tab, background=bg, amp=0.0,
+                       stop_factor=LT.T_END_FACTOR)
+    tf = ref["t"][-1]                    # time to cool to 1.5 T_floor/T_eq
     lam = x * ref["cs_tcool0_kpc"]
     t_out = np.linspace(0, 3 * tf, 1500)
-    o = LT.integrate(N0, T0, lam, table=tab, background=bg, amp=1.0, Tstop=0,
+    o = LT.integrate(N0, T0, lam, Z=Z, table=tab, background=bg, amp=1.0, Tstop=0,
                      t_end=3 * tf * C.Myr, t_out=t_out)
     s = np.abs(o["s"])
     cool = o["t"] <= tf
@@ -77,7 +78,8 @@ def one_uvb(args):
     import cooling_models as CM
     cool, n0, Z, T0, x, bg = args
     model = CM.make_model(cool, Z)
-    ref = LT.integrate(n0, T0, 1.0, model=model, background=bg, amp=0.0)
+    ref = LT.integrate(n0, T0, 1.0, model=model, background=bg, amp=0.0,
+                       stop_factor=LT.T_END_FACTOR)
     tf = ref["t"][-1]
     lam = x * ref["cs_tcool0_kpc"]
     t_out = np.linspace(0, 3 * tf, 1500)
@@ -113,6 +115,52 @@ def main_uvb():
     print("wrote", path, len(rows), "rows")
 
 
+# ---------------------------------------------------------------------------
+# Different kinds of seed perturbation (density, temperature, sound wave,
+# velocity, metallicity) with the split Cloudy tables.
+#     NPROC=4 python linear_maps.py pert  ->  ../results/linear_maps_pert.npz
+# ---------------------------------------------------------------------------
+PERTS = ["density", "temperature", "sound", "velocity", "metal"]
+
+
+def one_pert(args):
+    import cooling_models as CM
+    cool, pert, n0, Z, T0, x, bg = args
+    model = CM.make_model(cool, Z)
+    ref = LT.integrate(n0, T0, 1.0, model=model, background=bg, amp=0.0,
+                       stop_factor=LT.T_END_FACTOR)
+    tf = ref["t"][-1]
+    lam = x * ref["cs_tcool0_kpc"]
+    t_out = np.linspace(0, 3 * tf, 1500)
+    o = LT.integrate(n0, T0, lam, model=model, background=bg, amp=1.0, Tstop=0,
+                     t_end=3 * tf * C.Myr, t_out=t_out, pert=pert)
+    s, K = np.abs(o["s"]), np.abs(o["dK"])
+    cool_ph = o["t"] <= tf
+    late = o["t"] >= 2 * tf
+    return dict(cooling=cool, pert=pert, n0=n0, Z=Z, T0=T0, x=x, bg=bg, tf=tf,
+                s_max_cool=s[cool_ph].max(), s_max=s.max(),
+                s_late_max=s[late].max(), s_late_min=s[late].min(),
+                s_end=o["s"][-1], K_max=K.max(), K_end=o["dK"][-1],
+                s_sign_cool=np.sign(o["s"][cool_ph][np.argmax(s[cool_ph])]))
+
+
+def main_pert():
+    jobs = list(itertools.product(["ciecl_z", "pie_z"], PERTS, [1e-3], [0.3], [1e6],
+                                  XS_UVB, BGS))
+    nproc = int(os.environ.get("NPROC", 1))
+    with Pool(nproc) as pool:
+        rows = pool.map(one_pert, jobs, chunksize=2)
+    out = {k: np.array([r[k] for r in rows]) for k in rows[0]}
+    path = os.path.join(os.path.dirname(__file__), "..", "results", "linear_maps_pert.npz")
+    np.savez(path, **out)
+    print("wrote", path, len(rows), "rows")
+
+
 if __name__ == "__main__":
     import sys
-    main_uvb() if "uvb" in sys.argv[1:] else main_cie()
+    if "uvb" in sys.argv[1:]:
+        main_uvb()
+    elif "pert" in sys.argv[1:]:
+        main_pert()
+    else:
+        main_cie()

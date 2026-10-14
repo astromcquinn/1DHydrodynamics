@@ -6,9 +6,9 @@
 #define  COOLING                        TABULATED
 #define  RECONSTRUCTION                 LINEAR
 #define  TIME_STEPPING                  RK2
-#define  NTRACER                        1
+#define  NTRACER                        2
 #define  PARTICLES                      NO
-#define  USER_DEF_PARAMETERS            13
+#define  USER_DEF_PARAMETERS            15
 
 // Physics dependent declarations
 
@@ -34,6 +34,8 @@
 #define  PHASE                          10
 #define  COOL_MASK                      11
 #define  COOL_MODE                      12
+#define  PERT_TYPE                      13
+#define  ZMET                           14
 
 // [Beg] user-defined constants (do not change this line)
 

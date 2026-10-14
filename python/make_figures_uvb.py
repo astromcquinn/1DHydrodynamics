@@ -13,6 +13,7 @@ import cooling as C
 import cooling_models as CM
 import linear_theory as LT
 import plutorun as P
+from metrics import t_cool as tc
 from make_figures import (FIG, RES, S1, S2, S3, S4, S5, INK2, GRID, plt, save,
                           cloud_metrics)
 
@@ -112,7 +113,7 @@ def fig_linear_uvb():
                         + f", Z = 0.3, T$_0$ = {T0:.0e} K".replace("e+0", "×10$^") + "$")
         ax[0].set_ylabel(r"amplification $|\delta\rho/\rho|/A_0$")
         ax[0].legend(fontsize=7.5, loc="upper right")
-        ax[1].text(0.04, 1.2, "solid: max while cooling to T$_{eq}$ (floor)\ndotted: max by 3 t$_{floor}$",
+        ax[1].text(0.04, 1.2, "solid: max while cooling (to 1.5 T$_{eq}$)\ndotted: max by 3 t$_{cool}$",
                    fontsize=8, color=INK2)
         save(fig, f"fig14_linear_uvb{tag}.png")
 
@@ -132,7 +133,7 @@ def fig_infinite_uvb():
                 p = d["params"]
                 if p["cooling"] != cool or p["Z"] != Z or p["rho_bg"] != n or p["amp"] != 1e-3:
                     continue
-                tf = d["t_floor_iso"]
+                tf = tc(d)
                 cool_ph = d["t"] <= tf
                 pts.append((p["lam"] / d["cs_tcool0"], np.abs(d["amp_mode"][cool_ph]).max() / 1e-3))
             pts = np.array(sorted(pts))
@@ -176,7 +177,7 @@ def fig_cloud_uvb():
     ax[0].set_ylabel(r"max $|\delta\rho/\rho|/A_0$ while cooling")
     ax[0].set_title("Cloud runs with a UV background")
     ax[1].set_title("Same clouds: growth while cooling")
-    ax[2].set_title("Same clouds: growth by 2.5 t$_{floor}$")
+    ax[2].set_title("Same clouds: growth by 2.5 t$_{cool}$")
     from matplotlib.lines import Line2D
     h = [Line2D([], [], color=c, marker="o", ls="none", label=f"n$_{{bg}}$ = {n:g}") for n, c in NCOL.items()]
     h += [Line2D([], [], color=INK2, marker="o", mfc="none", ls="none", label="< 10 cells/λ after collapse")]
@@ -197,15 +198,16 @@ def fig_amplitude_uvb():
                 for d in R:
                     p = d["params"]
                     if p["rho_bg"] == n and p["amp"] == A:
-                        tf = d["t_floor_iso"]
-                        a.semilogy(d["t"] / tf, np.maximum(d["amp_max"], 1e-4), color=c, lw=1.4,
+                        tf = tc(d)
+                        k = d["t"] <= 3 * tf
+                        a.semilogy(d["t"][k] / tf, np.maximum(d["amp_max"][k], 1e-4), color=c, lw=1.4,
                                    label=f"A$_0$ = {A:g}")
                         Lx = p["L_cloud"] / d["cs_tcool0"]
             a.set_title(f"{lab}: n$_{{bg}}$ = {n:g} (L/c$_s$t$_{{cool}}$ = {Lx:.2g})")
             a.set_ylim(1e-4, 5e2)
             a.axvline(1, color=GRID, lw=1)
             if row == 1:
-                a.set_xlabel(r"t / t$_{floor}$")
+                a.set_xlabel(r"t / t$_{cool}$")
         ax[row, 0].set_ylabel(r"interior max $\rho/\bar\rho - 1$")
     ax[0, 0].legend(fontsize=7.5)
     save(fig, "fig17_amplitude_uvb.png")

@@ -48,7 +48,8 @@ import cooling_models as CM
 
 def integrate(n0, T0, lam_kpc, Z=None, table=None, background="isochoric",
               amp=1.0, heat=0.0, Tfloor=1.0e4, t_end=None, Tstop=None,
-              npts=400, rtol=1e-8, t_out=None, model=None):
+              npts=400, rtol=1e-8, t_out=None, model=None, pert=None,
+              stop_factor=1.05):
     """
     Integrate the linearised equations.
 
@@ -59,9 +60,18 @@ def integrate(n0, T0, lam_kpc, Z=None, table=None, background="isochoric",
               Default: CIEFloor(Z) (or a CoolingTable passed as `table`),
               i.e. the original collisional cooling with a floor at Tfloor.
     heat    : extra uniform volumetric heating [erg cm^-3 s^-1]
-    amp     : initial delta rho / rho (isobaric seed: q = w = 0)
+    amp     : perturbation amplitude A
+    pert    : type of seed (default "density"):
+                "density"     delta rho/rho = A at uniform pressure (s=A)
+                "temperature" delta T/T = A at fixed density (q=A)
+                "sound"       standing sound wave, s=A, q=gamma A
+                "velocity"    delta v = A c_s sin(k m) (w=A c_s)
+                "metal"       delta Z/Z = A at uniform rho, p; Z is carried
+                              with the gas, so this is a constant forcing
+                              -(gamma-1)/p (dL/dlnZ) A in the energy equation
+                              (needs a model with dL_dlnZ, e.g. "pie_z")
     Tstop   : stop when the background reaches this temperature.  Default:
-              1.05 x the floor / equilibrium temperature.  Tstop=0 integrates
+              stop_factor x the floor / equilibrium temperature.  Tstop=0 integrates
               to t_end, through the floor (the post-cooling phase).
     t_out   : optional output times [Myr] (default: npts uniform samples)
     Returns a dict of arrays (t in Myr).
@@ -86,7 +96,7 @@ def integrate(n0, T0, lam_kpc, Z=None, table=None, background="isochoric",
     tc0 = p0 / (g - 1) / Lnet(rho0, T0)[0]
     if t_end is None:
         t_end = 50.0 * tc0
-    stop_fac = 1.05 if Tstop is None else None
+    stop_fac = stop_factor if Tstop is None else None
     cs0 = C.cs_of(T0)
 
     # y = [ln rho0, ln p0, s, q, w/cs0]
@@ -107,6 +117,8 @@ def integrate(n0, T0, lam_kpc, Z=None, table=None, background="isochoric",
         ds = s * D - k * w
         dw = k * p / rho * q
         dq = q * r + g * s * D - g * k * w - (g - 1) / p * (Lr * s + LT * (q - s))
+        if zeta:
+            dq -= (g - 1) / p * model.dL_dlnZ(rho, T) * zeta
         return [D, dlp, ds, dq, dw / cs0]
 
     def hit_floor(t, y):
@@ -115,7 +127,13 @@ def integrate(n0, T0, lam_kpc, Z=None, table=None, background="isochoric",
         return C.T_of(rho, p) - Ts
     hit_floor.terminal = True
 
-    y0 = [np.log(rho0), np.log(p0), amp, 0.0, 0.0]
+    pert = pert or "density"
+    s0, q0, w0, zeta = {"density": (amp, 0.0, 0.0, 0.0),
+                        "temperature": (0.0, amp, 0.0, 0.0),
+                        "sound": (amp, g * amp, 0.0, 0.0),
+                        "velocity": (0.0, 0.0, amp, 0.0),
+                        "metal": (0.0, 0.0, 0.0, amp)}[pert]
+    y0 = [np.log(rho0), np.log(p0), s0, q0, w0]
     sol = solve_ivp(rhs, (0, t_end), y0, method="LSODA", rtol=rtol,
                     atol=[1e-10, 1e-10] + [1e-12 * max(abs(amp), 1e-30)] * 3,
                     events=hit_floor, dense_output=True)
@@ -133,11 +151,25 @@ def integrate(n0, T0, lam_kpc, Z=None, table=None, background="isochoric",
     Ls = np.array([Lnet(a, b) for a, b in zip(rho, T)])
     tc = p / (g - 1) / np.where(np.abs(Ls[:, 0]) > 0, np.abs(Ls[:, 0]), 1e-300)
     out = dict(t=t / C.Myr, T=T, n=rho / C.mp, p=p, s=Y[2], q=Y[3],
+               dT=Y[3] - Y[2], dK=Y[3] - g * Y[2],      # delta T/T, delta ln(p/rho^gamma)
                w=Y[4] * cs0, k=k, lam_kpc=2 * np.pi / k / C.kpc,
                kcs_tcool=k * C.cs_of(T) * tc, tcool0_Myr=tc0 / C.Myr,
                cs_tcool0_kpc=cs0 * tc0 / C.kpc,
                LambdaT=Ls[:, 2] / np.where(Ls[:, 0] != 0, Ls[:, 0], 1e-300))
     return out
+
+
+T_END_FACTOR = 1.5   # cooling counts as finished once T < 1.5 T_eq (or floor)
+
+
+def t_cool_end(n0, T0, model, background="isochoric", heat=0.0):
+    """Time [Myr] for unperturbed gas starting at (n0, T0) to cool to
+    T_END_FACTOR x T_eq.  Used to normalise all time axes ("t_floor").
+    (Reaching 1.05 T_eq can take 2-3x longer, because cooling just above the
+    floor / equilibrium is slow, so it is a poor marker of the end of cooling.)"""
+    o = integrate(n0, T0, 1.0, model=model, background=background, amp=0.0,
+                  heat=heat, stop_factor=T_END_FACTOR)
+    return o["t"][-1]
 
 
 def timeshift_amplification(T, T0, tab, background):

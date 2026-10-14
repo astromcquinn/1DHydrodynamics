@@ -157,7 +157,7 @@ class Cloudy2D:
         T1, L1 = C.make_table(self.Z)
         C.write_pluto_table(os.path.join(d, "cooltable.dat"), T1, L1)
         with open(os.path.join(d, "cooltable2d.dat"), "w") as f:
-            f.write(f"{len(self.logn)} {len(self.logT)}\n")
+            f.write(f"{len(self.logn)} {len(self.logT)} 2\n")
             f.write(" ".join(f"{v:.8f}" for v in self.logn) + "\n")
             f.write(" ".join(f"{v:.8f}" for v in self.logT) + "\n")
             for tab in (self.lc, self.lh):
@@ -166,11 +166,75 @@ class Cloudy2D:
         return dict(cool_mode=1, T_floor=self.Tfloor)
 
 
+class Cloudy2DSplit(Cloudy2D):
+    """Same Cloudy tables, but with the primordial and (solar) metal rates kept
+    separate and combined with the local metallicity Z, as radiat.cpp does when
+    the 2D table has 4 components (Z carried by tracer 2).  Needed for
+    metallicity perturbations; for uniform Z it differs from Cloudy2D only in
+    the order of interpolation and summation (percent level)."""
+
+    def __init__(self, kind, Z, Tfloor=None):
+        super().__init__(kind, Z, Tfloor)
+        d = np.load(os.path.join(DATA, f"cloudy_{kind}_z0.npz"))
+
+        def lg(a):
+            with np.errstate(divide="ignore"):
+                return np.where(a > 0, np.log10(np.maximum(a, 1e-300)), LOG_ZERO)
+        self.tabs = [lg(d["prim_cool"]), lg(d["metal_cool"]),
+                     lg(d["prim_heat"]), lg(d["metal_heat"])]
+        self.label += "_z"
+
+    def _parts(self, x, y):
+        return [self._interp_d(t, x, y) for t in self.tabs]
+
+    def _L(self, lognH, logT):
+        (pc, _, _), (mc, _, _), (ph, _, _), (mh, _, _) = self._parts(lognH, logT)
+        net = (10.0 ** pc + self.Z * 10.0 ** mc) - (10.0 ** ph + self.Z * 10.0 ** mh)
+        return (10.0 ** lognH) ** 2 * net * cutoff(10.0 ** logT, self.Tfloor)[0]
+
+    def derivs(self, rho, T):
+        nH = C.nH_of_rho(rho)
+        x, y = np.log10(nH), np.log10(T)
+        parts = self._parts(x, y)
+        w = [1.0, self.Z, -1.0, -self.Z]          # cool_p + Z cool_m - heat_p - Z heat_m
+        vals = [wi * 10.0 ** p[0] for wi, p in zip(w, parts)]
+        f, dlnf = cutoff(T, self.Tfloor)
+        n2 = nH * nH * f
+        L = n2 * sum(vals)
+        Lr = n2 * sum(v * (2.0 + p[1]) for v, p in zip(vals, parts))
+        LT = n2 * sum(v * p[2] for v, p in zip(vals, parts)) + L * dlnf
+        return L, Lr, LT
+
+    def dL_dlnZ(self, rho, T):
+        """Z dL/dZ at fixed rho, T: the response to a metallicity perturbation."""
+        nH = C.nH_of_rho(rho)
+        x, y = np.log10(nH), np.log10(T)
+        (_, _, _), (mc, _, _), (_, _, _), (mh, _, _) = self._parts(x, y)
+        return nH * nH * cutoff(T, self.Tfloor)[0] * self.Z * (10.0 ** mc - 10.0 ** mh)
+
+    def write_pluto(self, d):
+        T1, L1 = C.make_table(self.Z)
+        C.write_pluto_table(os.path.join(d, "cooltable.dat"), T1, L1)
+        with open(os.path.join(d, "cooltable2d.dat"), "w") as f:
+            f.write(f"{len(self.logn)} {len(self.logT)} 4\n")
+            f.write(" ".join(f"{v:.8f}" for v in self.logn) + "\n")
+            f.write(" ".join(f"{v:.8f}" for v in self.logT) + "\n")
+            for tab in self.tabs:
+                for row in tab:
+                    f.write(" ".join(f"{v:.8f}" for v in row) + "\n")
+        return dict(cool_mode=1, T_floor=self.Tfloor)
+
+
 def make_model(cooling, Z):
+    """cooling: "cie", "ciecl", "pie"; append "_z" for the split tables that
+    allow a spatially varying metallicity (e.g. "pie_z")."""
     if cooling == "cie":
         return CIEFloor(Z)
-    if cooling == "ciecl":
-        return Cloudy2D("noUVB", Z)
-    if cooling == "pie":
-        return Cloudy2D("hm2012", Z)
+    split = cooling.endswith("_z")
+    base = cooling[:-2] if split else cooling
+    cls = Cloudy2DSplit if split else Cloudy2D
+    if base == "ciecl":
+        return cls("noUVB", Z)
+    if base == "pie":
+        return cls("hm2012", Z)
     raise ValueError(cooling)

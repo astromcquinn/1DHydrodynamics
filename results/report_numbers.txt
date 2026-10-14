@@ -1,0 +1,160 @@
+
+== infinite CIE (approx) sims, A=1e-3: G while cooling / by 2.5 t_cool
+Z=0.1: x=0.03:55.9/150  x=0.1:23.8/105  x=0.3:9.39/66.7  x=1:3.3/19.2  x=3:1.33/3.56  x=10:1.03/1.24  x=30:1/1.03
+Z=0.3: x=0.03:57.4/123  x=0.1:27/103  x=0.3:10.2/67.9  x=1:3.39/19.5  x=3:1.34/3.63  x=10:1.03/1.23  x=30:1/1.03
+Z=1.0: x=0.03:72.8/98.5  x=0.1:38.4/99.5  x=0.3:13.2/68.5  x=1:3.88/20.3  x=3:1.4/3.72  x=10:1.04/1.24  x=30:1/1.03
+A=0.1 Z=0.3: x=0.03:G=14.6,contrast=29.9  x=0.1:G=14.9,contrast=34.4  x=0.3:G=15.2,contrast=43.1  x=1:G=3.78,contrast=31.6  x=3:G=1.34,contrast=0.604  x=10:G=1.02,contrast=0.132  x=30:G=0.995,contrast=0.103
+
+== cloud CIE sims
+N(L/cst>=1.5) = 52
+(G_2.5-1) x^2: median 25, 10-90% 21-29, N=37
+chi=1.3 Z=0.1 n=0.001: x=0.18 Gcool=20.3 G2.5=54.2
+chi=1.3 Z=0.3 n=0.001: x=0.47 Gcool=8.15 G2.5=38.1
+chi=1.3 Z=0.1 n=0.01: x=1.8 Gcool=1.84 G2.5=7.01
+chi=1.3 Z=0.3 n=0.01: x=4.7 Gcool=1.15 G2.5=2.02
+x in [0.15,0.3): Gcool median 18.5  G2.5 median 31.9  (N=3)
+x in [0.8,1.6): Gcool median 4.18  G2.5 median 14.5  (N=5)
+x in [1.6,3): Gcool median 1.93  G2.5 median 5.79  (N=6)
+x in [4,6): Gcool median 1.22  G2.5 median 2.23  (N=2)
+x in [10,30): Gcool median 1.01  G2.5 median 1.06  (N=8)
+isochoric dT/T growth before end of cooling: 12-51 (A0=0.02 -> 0.24-1.01)
+
+== amplitude scan (L=50, chi=2, Z=0.3)
+amplitude n=0.0001 A=0.001: L/cst=0.93 G_cool=52.06 G2.5=1064 peak=14 at1.5=11.3 at2.5=0.105 end=0.0472 t_end/tc=4.4
+amplitude n=0.0001 A=0.003: L/cst=0.93 G_cool=30.39 G2.5=438.5 peak=15 at1.5=12.3 at2.5=0.0843 end=0.0592 t_end/tc=4.4
+amplitude n=0.0001 A=0.01: L/cst=0.93 G_cool=23.58 G2.5=98.03 peak=18.4 at1.5=13.7 at2.5=0.0953 end=0.0705 t_end/tc=4.4
+amplitude n=0.0001 A=0.03: L/cst=0.93 G_cool=23.9 G2.5=32.74 peak=25.3 at1.5=16.7 at2.5=0.0407 end=0.0523 t_end/tc=4.4
+amplitude n=0.0001 A=0.1: L/cst=0.93 G_cool=13.84 G2.5=13.84 peak=28.1 at1.5=22.4 at2.5=0.12 end=0.05 t_end/tc=4.4
+amplitude n=0.0001 A=0.3: L/cst=0.93 G_cool=4.982 G2.5=4.982 peak=34.4 at1.5=6.65 at2.5=0.155 end=0.0706 t_end/tc=4.4
+amplitude n=0.001 A=0.001: L/cst=9.3 G_cool=2.061 G2.5=6.499 peak=0.0104 at1.5=0.00329 at2.5=0.00601 end=0.0104 t_end/tc=4.4
+amplitude n=0.001 A=0.003: L/cst=9.3 G_cool=2.059 G2.5=6.498 peak=0.0314 at1.5=0.00987 at2.5=0.0181 end=0.0314 t_end/tc=4.4
+amplitude n=0.001 A=0.01: L/cst=9.3 G_cool=2.059 G2.5=6.489 peak=0.108 at1.5=0.033 at2.5=0.0614 end=0.106 t_end/tc=4.4
+amplitude n=0.001 A=0.03: L/cst=9.3 G_cool=2.056 G2.5=6.394 peak=0.368 at1.5=0.0983 at2.5=0.187 end=0.368 t_end/tc=4.4
+amplitude n=0.001 A=0.1: L/cst=9.3 G_cool=1.998 G2.5=5.436 peak=2.19 at1.5=0.309 at2.5=0.655 end=2.17 t_end/tc=4.4
+amplitude n=0.001 A=0.3: L/cst=9.3 G_cool=1.625 G2.5=1.935 peak=69.3 at1.5=1.42 at2.5=9.21 end=5.26 t_end/tc=4.4
+amplitude n=0.01 A=0.001: L/cst=93 G_cool=1.011 G2.5=1.059 peak=0.00102 at1.5=0.000931 at2.5=0.000961 end=0.00102 t_end/tc=4.4
+amplitude n=0.01 A=0.003: L/cst=93 G_cool=1.011 G2.5=1.059 peak=0.00305 at1.5=0.00279 at2.5=0.00288 end=0.00303 t_end/tc=4.4
+amplitude n=0.01 A=0.01: L/cst=93 G_cool=1.011 G2.5=1.059 peak=0.0101 at1.5=0.00929 at2.5=0.00958 end=0.01 t_end/tc=4.4
+amplitude n=0.01 A=0.03: L/cst=93 G_cool=1.01 G2.5=1.058 peak=0.0299 at1.5=0.0278 at2.5=0.0285 end=0.0297 t_end/tc=4.4
+amplitude n=0.01 A=0.1: L/cst=93 G_cool=1.002 G2.5=1.047 peak=0.0958 at1.5=0.0911 at2.5=0.0932 end=0.0956 t_end/tc=4.4
+amplitude n=0.01 A=0.3: L/cst=93 G_cool=0.9315 G2.5=0.9521 peak=0.265 at1.5=0.263 at2.5=0.263 end=0.264 t_end/tc=4.4
+amplitude_uvb n=0.0001 A=0.001: L/cst=0.52 G_cool=53.76 G2.5=921.3 peak=8.05 at1.5=0.56 at2.5=0.0158 end=0.000579 t_end/tc=3.3
+amplitude_uvb n=0.0001 A=0.003: L/cst=0.52 G_cool=48.1 G2.5=301.2 peak=8.71 at1.5=0.561 at2.5=0.0151 end=0.000616 t_end/tc=3.3
+amplitude_uvb n=0.0001 A=0.01: L/cst=0.52 G_cool=46 G2.5=86.13 peak=10.9 at1.5=0.565 at2.5=0.0171 end=0.000573 t_end/tc=3.3
+amplitude_uvb n=0.0001 A=0.03: L/cst=0.52 G_cool=34.46 G2.5=34.46 peak=11 at1.5=0.566 at2.5=0.0189 end=0.00043 t_end/tc=3.3
+amplitude_uvb n=0.0001 A=0.1: L/cst=0.52 G_cool=13.77 G2.5=13.77 peak=12.6 at1.5=0.559 at2.5=0.02 end=0.00104 t_end/tc=3.3
+amplitude_uvb n=0.0001 A=0.3: L/cst=0.52 G_cool=4.877 G2.5=4.877 peak=20.1 at1.5=0.482 at2.5=0.00865 end=0.00577 t_end/tc=3.3
+amplitude_uvb n=0.001 A=0.001: L/cst=5.2 G_cool=3.747 G2.5=15.93 peak=0.019 at1.5=0.0075 at2.5=0.0148 end=0.0184 t_end/tc=3.2
+amplitude_uvb n=0.001 A=0.003: L/cst=5.2 G_cool=3.746 G2.5=15.93 peak=0.0586 at1.5=0.0228 at2.5=0.0452 end=0.0586 t_end/tc=3.2
+amplitude_uvb n=0.001 A=0.01: L/cst=5.2 G_cool=3.741 G2.5=15.91 peak=0.214 at1.5=0.0795 at2.5=0.165 end=0.214 t_end/tc=3.2
+amplitude_uvb n=0.001 A=0.03: L/cst=5.2 G_cool=3.76 G2.5=15.74 peak=0.858 at1.5=0.266 at2.5=0.63 end=0.858 t_end/tc=3.2
+amplitude_uvb n=0.001 A=0.1: L/cst=5.2 G_cool=3.85 G2.5=12.51 peak=8.35 at1.5=1.48 at2.5=7.86 end=5.3 t_end/tc=3.2
+amplitude_uvb n=0.001 A=0.3: L/cst=5.2 G_cool=3.334 G2.5=4.734 peak=145 at1.5=85.7 at2.5=117 end=129 t_end/tc=3.2
+amplitude_uvb n=0.01 A=0.001: L/cst=52 G_cool=1.029 G2.5=1.176 peak=0.00113 at1.5=0.00098 at2.5=0.00107 end=0.00113 t_end/tc=3.2
+amplitude_uvb n=0.01 A=0.003: L/cst=52 G_cool=1.029 G2.5=1.176 peak=0.0034 at1.5=0.00294 at2.5=0.0032 end=0.0034 t_end/tc=3.2
+amplitude_uvb n=0.01 A=0.01: L/cst=52 G_cool=1.029 G2.5=1.176 peak=0.0113 at1.5=0.00979 at2.5=0.0106 end=0.0113 t_end/tc=3.2
+amplitude_uvb n=0.01 A=0.03: L/cst=52 G_cool=1.028 G2.5=1.175 peak=0.0333 at1.5=0.0292 at2.5=0.0315 end=0.0333 t_end/tc=3.2
+amplitude_uvb n=0.01 A=0.1: L/cst=52 G_cool=1.02 G2.5=1.158 peak=0.106 at1.5=0.0958 at2.5=0.102 end=0.105 t_end/tc=3.2
+amplitude_uvb n=0.01 A=0.3: L/cst=52 G_cool=0.9492 G2.5=1.018 peak=0.279 at1.5=0.273 at2.5=0.275 end=0.278 t_end/tc=3.2
+
+== resolution
+A=0.001 nx=16384 G_cool=51.2 peak=19.1 at1.5=13.6 at2.5=0.824
+A=0.001 nx=4096 G_cool=51.66 peak=17.5 at1.5=13 at2.5=0.617
+A=0.01 nx=16384 G_cool=23.69 peak=25.9 at1.5=14.7 at2.5=0.598
+A=0.01 nx=4096 G_cool=23.65 peak=24 at1.5=14.5 at2.5=0.586
+A=0.1 nx=16384 G_cool=13.91 peak=74.7 at1.5=15.1 at2.5=0.798
+A=0.1 nx=4096 G_cool=13.89 peak=47.4 at1.5=15.1 at2.5=0.553
+
+== infinite UV sims Z=0.3, A=1e-3: G while cooling / by 2.5 t_cool
+ciecl n=0.01: x=0.03:62.9/125  x=0.1:29.6/108  x=0.3:9.66/60.2  x=1:3.55/20.6  x=3:1.39/4.05  x=10:1.04/1.28  x=30:1/1.03
+pie n=0.0001: x=0.03:66.1/71.7  x=0.1:40.9/86  x=0.3:12.5/51.5  x=1:4.11/21.2  x=3:1.47/4.27  x=10:1.04/1.3  x=30:1/1.03
+pie n=0.001: x=0.03:75.3/109  x=0.1:36.8/107  x=0.3:11.2/61.8  x=1:3.79/21.4  x=3:1.43/4.14  x=10:1.04/1.28  x=30:1/1.03
+pie n=0.01: x=0.03:82.2/135  x=0.1:37/120  x=0.3:11.1/68.6  x=1:3.79/21.3  x=3:1.43/4.11  x=10:1.04/1.28  x=30:1/1.03
+pie A=0.1 contrast: x=0.03:30.5  x=0.1:33.7  x=0.3:45.7  x=1:25.9  x=3:0.658  x=10:0.135  x=30:0.104
+
+== cloud UV vs CIE pairs
+pairs 39; Gcool ratio median 1.06 (10-90% 1.00-1.78); G2.5 ratio median 1.32 (1.01-2.37); pie iso coeff median 24 (21-38) N=31
+
+== seed types, infinite, A=1e-3: G while cooling / by 2.5 t_cool / value at 2.5 t_cool (signed)
+ciecl_z x=0.1 density     28.2 / 108 / +42.8
+ciecl_z x=0.1 metal       9.44 / 37.7 / +15
+ciecl_z x=0.1 sound       3.37 / 11.8 / -4.84
+ciecl_z x=0.1 temperature 18.9 / 71.9 / -28.7
+ciecl_z x=0.1 velocity    1.62 / 1.97 / +0.122
+ciecl_z x=1 density     3.49 / 20.7 / +20.7
+ciecl_z x=1 metal       0.977 / 7.29 / +7.29
+ciecl_z x=1 sound       1.14 / 1.14 / +0.859
+ciecl_z x=1 temperature 2.72 / 11.9 / -11.9
+ciecl_z x=1 velocity    1.09 / 4.5 / +4.5
+ciecl_z x=10 density     1.04 / 1.28 / +1.3
+ciecl_z x=10 metal       0.0146 / 0.103 / +0.11
+ciecl_z x=10 sound       1 / 1 / +0.761
+ciecl_z x=10 temperature 0.0639 / 0.305 / -0.323
+ciecl_z x=10 velocity    0.436 / 1.09 / -1.09
+pie_z x=0.1 density     37.4 / 107 / -12.4
+pie_z x=0.1 metal       12.7 / 37.6 / -4.5
+pie_z x=0.1 sound       4.44 / 11.4 / +1.01
+pie_z x=0.1 temperature 25 / 71.4 / +8.18
+pie_z x=0.1 velocity    1.58 / 2.5 / -1.02
+pie_z x=1 density     3.82 / 21.2 / +21.5
+pie_z x=1 metal       1.1 / 7.5 / +7.57
+pie_z x=1 sound       1.14 / 1.14 / +0.952
+pie_z x=1 temperature 2.9 / 12.2 / -12.3
+pie_z x=1 velocity    1.09 / 4.65 / +4.65
+pie_z x=10 density     1.04 / 1.29 / +1.3
+pie_z x=10 metal       0.0163 / 0.111 / +0.117
+pie_z x=10 sound       1 / 1 / +0.748
+pie_z x=10 temperature 0.0684 / 0.322 / -0.322
+pie_z x=10 velocity    0.449 / 1.09 / -1.13
+A=0.1 ciecl_z x=0.1 density     peak contrast 28.4 end 1.17
+A=0.1 ciecl_z x=0.1 metal       peak contrast 14.7 end 0.823
+A=0.1 ciecl_z x=0.1 sound       peak contrast 1.39 end 0.192
+A=0.1 ciecl_z x=0.1 temperature peak contrast 21.6 end 1.04
+A=0.1 ciecl_z x=0.1 velocity    peak contrast 0.201 end 0.0364
+A=0.1 ciecl_z x=1 density     peak contrast 21.6 end 2.28
+A=0.1 ciecl_z x=1 metal       peak contrast 2.37 end 1.38
+A=0.1 ciecl_z x=1 sound       peak contrast 0.39 end 0.382
+A=0.1 ciecl_z x=1 temperature peak contrast 5.47 end 1.45
+A=0.1 ciecl_z x=1 velocity    peak contrast 1.23 end 0.838
+A=0.1 ciecl_z x=10 density     peak contrast 0.16 end 0.16
+A=0.1 ciecl_z x=10 metal       peak contrast 0.0254 end 0.0254
+A=0.1 ciecl_z x=10 sound       peak contrast 0.1 end 0.0517
+A=0.1 ciecl_z x=10 temperature peak contrast 0.0766 end 0.0766
+A=0.1 ciecl_z x=10 velocity    peak contrast 0.292 end 0.292
+A=0.1 pie_z x=0.1 density     peak contrast 33.6 end 0.338
+A=0.1 pie_z x=0.1 metal       peak contrast 16.7 end 0.319
+A=0.1 pie_z x=0.1 sound       peak contrast 1.38 end 0.0212
+A=0.1 pie_z x=0.1 temperature peak contrast 30.2 end 0.383
+A=0.1 pie_z x=0.1 velocity    peak contrast 0.224 end 0.0443
+A=0.1 pie_z x=1 density     peak contrast 25.9 end 3.43
+A=0.1 pie_z x=1 metal       peak contrast 2.57 end 2.57
+A=0.1 pie_z x=1 sound       peak contrast 0.16 end 0.16
+A=0.1 pie_z x=1 temperature peak contrast 5.9 end 3.43
+A=0.1 pie_z x=1 velocity    peak contrast 1.24 end 1.24
+A=0.1 pie_z x=10 density     peak contrast 0.135 end 0.135
+A=0.1 pie_z x=10 metal       peak contrast 0.0146 end 0.0146
+A=0.1 pie_z x=10 sound       peak contrast 0.1 end 0.0698
+A=0.1 pie_z x=10 temperature peak contrast 0.0446 end 0.0446
+A=0.1 pie_z x=10 velocity    peak contrast 0.171 end 0.171
+
+== seed types, clouds A=0.02
+ciecl_z n=0.001 density     x=1.2 L/cst=5.2 G_cool=3.08 G2.5=14.7 peak interior contrast=19.3 size_end=10.1
+ciecl_z n=0.01 density     x=12 L/cst=52 G_cool=1.02 G2.5=1.17 peak interior contrast=0.0302 size_end=46.6
+ciecl_z n=0.001 metal       x=1.2 L/cst=5.2 G_cool=0.617 G2.5=4.06 peak interior contrast=15.1 size_end=10.0
+ciecl_z n=0.01 metal       x=12 L/cst=52 G_cool=0.00728 G2.5=0.0507 peak interior contrast=0.00384 size_end=46.6
+ciecl_z n=0.001 sound       x=1.2 L/cst=5.2 G_cool=1.1 G2.5=4.14 peak interior contrast=13.6 size_end=9.8
+ciecl_z n=0.01 sound       x=12 L/cst=52 G_cool=1 G2.5=1 peak interior contrast=0.018 size_end=46.6
+ciecl_z n=0.001 temperature x=1.2 L/cst=5.2 G_cool=2.51 G2.5=11.5 peak interior contrast=14.3 size_end=9.7
+ciecl_z n=0.01 temperature x=12 L/cst=52 G_cool=0.0364 G2.5=0.185 peak interior contrast=0.016 size_end=46.6
+ciecl_z n=0.001 velocity    x=1.2 L/cst=5.2 G_cool=1.09 G2.5=2.64 peak interior contrast=15 size_end=9.8
+ciecl_z n=0.01 velocity    x=12 L/cst=52 G_cool=0.296 G2.5=0.756 peak interior contrast=0.0561 size_end=46.7
+pie_z n=0.001 density     x=1.2 L/cst=5.2 G_cool=3.78 G2.5=15.7 peak interior contrast=0.491 size_end=35.7
+pie_z n=0.01 density     x=12 L/cst=52 G_cool=1.03 G2.5=1.18 peak interior contrast=0.0224 size_end=48.8
+pie_z n=0.001 metal       x=1.2 L/cst=5.2 G_cool=0.826 G2.5=4.39 peak interior contrast=0.116 size_end=35.4
+pie_z n=0.01 metal       x=12 L/cst=52 G_cool=0.00897 G2.5=0.0531 peak interior contrast=0.00136 size_end=48.8
+pie_z n=0.001 sound       x=1.2 L/cst=5.2 G_cool=1.29 G2.5=4.39 peak interior contrast=0.131 size_end=35.2
+pie_z n=0.01 sound       x=12 L/cst=52 G_cool=1 G2.5=1 peak interior contrast=0.018 size_end=48.8
+pie_z n=0.001 temperature x=1.2 L/cst=5.2 G_cool=3.06 G2.5=12.2 peak interior contrast=0.45 size_end=34.9
+pie_z n=0.01 temperature x=12 L/cst=52 G_cool=0.0421 G2.5=0.192 peak interior contrast=0.00579 size_end=48.8
+pie_z n=0.001 velocity    x=1.2 L/cst=5.2 G_cool=1.09 G2.5=2.92 peak interior contrast=0.0831 size_end=35.3
+pie_z n=0.01 velocity    x=12 L/cst=52 G_cool=0.315 G2.5=0.777 peak interior contrast=0.0226 size_end=48.8
