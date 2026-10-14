@@ -36,15 +36,96 @@ curve with a $10^4$\,K floor, Cloudy collisional equilibrium with the same floor
 and Cloudy in the \citealt{hm12} UV background) and five kinds of seed
 perturbation (density, temperature, sound wave, velocity, metallicity). The
 growth is controlled by $x=\lambda/(\cstc)$ and $L/(\cstc)$. Per e-fold of
-cooling, a perturbation grows by as many e-folds as a perturbation in a heated
-medium grows per cooling time; but a cooling gas has only $\approx4$ e-folds of
-temperature to traverse, so the amplification is finite ($\lesssim10^2$ in an
-infinite medium). Much of it happens after the gas has cooled. After that the
+cooling, a short-wavelength perturbation grows by as many e-folds as one in a
+medium with state-independent heating grows per cooling time; but a cooling gas has
+only $\approx4$ e-folds of temperature to traverse, so the amplification is finite
+($\lesssim10^2$ in an infinite medium). This short-wavelength behaviour was known
+for power-law cooling \citep{field65,balbus86,burkert00}; here it is extended to
+realistic cooling with and without a UV background, to all wavelengths, to finite
+cooling regions, and through the evolution after the gas has cooled. Much of it happens after the gas has cooled. After that the
 perturbation becomes a sound wave in the cold gas, which in the UV background
 damps away.
 \end{abstract}
 
 \tableofcontents
+
+%======================================================================
+\section{Relation to previous work}
+\label{sec:prior}
+%======================================================================
+
+\paragraph{Thermal instability of a heated equilibrium.} \citet{field65} derived
+the isobaric, isochoric and isentropic criteria for a static medium in which
+heating balances cooling, and the full dispersion relation, including the damping
+of sound waves by radiative relaxation. \citet{balbus86} reformulated the criterion
+in Lagrangian form ($\mathcal{L}\to\mathcal{L}/T$), valid for a time-dependent
+background. \citet{waters19} classified all linear regimes between the isobaric and
+isochoric limits for a heated (photoionized) gas, including gas off the
+equilibrium curve, and followed damped oscillations of large clouds in 1D.
+\citet{mccourt12} and \citet{sharma12} added gravitational stratification: with
+heating in every layer, cold gas condenses only where $t_{\rm TI}/t_{\rm ff}\lesssim10$,
+and buoyancy saturates the growth. \citet{das21}, our main comparison, include
+metallicity gradients and fluctuations in a uniform, heated medium.
+
+\paragraph{Perturbations on a cooling background.} The no-heating case also goes
+back to \citet{field65}: in his \S VI a static medium with $\mathcal{L}\propto\rho
+T^N$ and no heat input has growing condensations for $N<2$, compared with $N<1$
+for a medium heated at a rate per unit mass independent of $\rho$ and $T$. The
+general Lagrangian solution of \citet{balbus86} (his eq.~23) gives the
+short-wavelength growth along any homogeneous cooling or contracting background;
+for $\mathcal{L}=n^2\Lambda(T)$ it reduces to our Eq.~(\ref{eq:perefold}). Closest
+to this work, \citet{burkert00} studied an isochorically cooling medium without
+heating with $\Lambda\propto T^\beta$. They found the scale-independent isobaric
+growth $\drho\propto(T_0/T)^{(2-\beta)/\gamma}$ (their eq.~22), which is our
+Eq.~(\ref{eq:timeshift}) for a power law; that growth stops once the cooling time
+falls below the sound-crossing time of the perturbation; that the perturbation then
+grows only slowly through the inertia of the gas; and that a minimum wavenumber,
+depending on the seed amplitude, is needed to go nonlinear before that transition
+(their eq.~28). \citet{koyama00} analysed thermal instability in an isobarically
+contracting post-shock layer with frozen background coefficients, valid only early
+in the cooling; \citet{hennebelle99,hennebelle00} derived self-similar solutions for
+a homologously cooling, compressed region without heating.
+
+\paragraph{Seed amplitude and condensation.} In cooling flows linear perturbations
+grow only by modest, power-law factors, limited by buoyancy and advection
+\citep{balbus89}, and condensation requires nonlinear seeds: blobs with
+$\delta\rho/\rho\gtrsim1$--2 in the ``cold feedback'' model of \citet{pizzolato05},
+and seeds of order unity in the unheated runs of \citet{sharma12} (their appendix A)
+and \citet{mccourt12}. In heated haloes the condensation threshold in
+$t_{\rm cool}/t_{\rm ff}$ rises with the seed amplitude \citep{choudhury19}, and
+density fluctuations from turbulence compete with mixing and buoyancy
+\citep{mohapatra23}. In the heated, bistable interstellar medium a finite trigger is
+needed because the warm phase is linearly stable: a roughly transonic converging
+flow on scales $\gtrsim c_s t_{\rm cool}$ \citep{hennebelle99}, with magnetic fields
+raising the threshold \citep{hennebelle00}; and small-scale turbulent forcing can
+suppress condensation \citep{sanchez02}. In 3D, clouds that lose pressure balance
+by cooling fragment (``shatter'') only if their final density contrast exceeds
+$\sim300$, whether or not the initial contrast was linear
+\citep{mccourt18,gronke20}.
+
+\paragraph{What is new here.} Our short-wavelength growth law is the explicit
+integral of \citet{balbus86} for an arbitrary $\Lambda(T)$, and \citet{burkert00}
+already established finite amplification and a seed-dependent threshold for
+power-law cooling. The new elements are:
+\begin{itemize}
+\item the full linear problem at all wavelengths, integrated along realistic CIE
+  and photoionization-equilibrium cooling histories to the floor or $\Teq$, with
+  the amplification and the minimum seed amplitude as functions of
+  $\lambda/(\cstc)$ and density;
+\item finite cooling regions embedded in non-cooling gas ($\chi=1$ clouds), and
+  where the isobaric (small-cloud) limit breaks down;
+\item the long-wavelength regime, where the density grows after cooling as
+  $G-1\approx24(\cstc/\lambda)^2$, rather than being erased as \citet{burkert00}
+  suggested for $K\lesssim1$;
+\item the evolution after cooling for up to $10^3\,\tcool$: sound waves in the cold
+  gas that persist with a floor and damp with a UV background;
+\item the temperature perturbation, which becomes nonlinear at the end of cooling
+  for seeds above $\sim0.4\%$ at every wavelength, while the density stays linear
+  \citep[contrast][who find non-isobaric behaviour only in the nonlinear regime of a
+  heated gas]{waters19};
+\item temperature, sound-wave, velocity and metallicity seeds alongside density seeds;
+\item validation of all of this against gPLUTO simulations.
+\end{itemize}
 
 %======================================================================
 \section{Setup}
@@ -302,10 +383,15 @@ isochoric background $d\ln T/dt=-1/\tcool$, so Eq.~(\ref{eq:isobaric}) becomes
 \qquad\Bigl(\text{isobaric background: }2-\LT\Bigr),
 \label{eq:perefold}
 \end{equation}
-which integrates to Eq.~(\ref{eq:timeshift}). \textbf{Per e-fold of cooling, the
+which integrates to Eq.~(\ref{eq:timeshift}); it is the explicit form of
+\citet{balbus86}'s eq.~23 for $\mathcal{L}=n^2\Lambda(T)$, and for $\Lambda\propto
+T^\beta$ it reduces to eq.~22 of \citet{burkert00}. \textbf{Per e-fold of cooling, the
 perturbation gains $(2-\LT)/\gamma$ e-folds: exactly the number of e-folds a
-perturbation in the heated medium gains per cooling time.} Locally the two media
-are equally unstable. What differs is the budget: the heated medium can keep
+perturbation in the heated medium of \citet{das21} gains per cooling time.} Locally
+the two media are equally unstable. This equality holds because Das et al.'s heating
+per unit volume is independent of $\rho$ and $T$. For heating per unit mass that is
+independent of $\rho$ and $T$, the heated rate is $(1-\LT)/(\gamma\tcool)$, and cooling
+gas is the more unstable of the two, as \citet{field65} noted. What differs is the budget: the heated medium can keep
 growing for as many cooling times as it lasts, whereas the cooling gas has only
 $\ln(10^6/1.5\times10^4)\approx4.2$ e-folds of temperature to traverse, after which
 it stops cooling. That is why the amplification of cooling gas is finite and is
@@ -318,7 +404,10 @@ nonlinear runs with $\drho=10^{-5}$ ($10^{-4}$ in the high-resolution runs) and 
 them grow; they do not map a threshold amplitude. Their only test with large
 initial amplitude, a square-wave density pulse, shows that nonlinear seeds erase
 the dependence on isochoric stability. In a cooling gas the finite amplification
-defines a minimum seed amplitude (Figure~\ref{fig:minamp}).
+defines a minimum seed amplitude (Figure~\ref{fig:minamp}), as \citet{burkert00}
+showed for power-law cooling (their critical $K$, eq.~28). Threshold amplitudes in
+heated, stratified haloes \citep{sharma12,choudhury19} arise differently, from
+buoyancy and mixing saturating the growth (Section~\ref{sec:prior}).
 
 \begin{table}[H]
 \centering
@@ -356,7 +445,8 @@ first. At long wavelengths ($x\gtrsim1$) the density is nearly frozen while
 $\delta T/T$ grows $\sim45$-fold during most of the cooling
 (Section~\ref{sec:isochoric}). At \emph{every} wavelength, the last stage of cooling
 is faster than sound can cross $\lambda$ ($\tcool$ drops to $\sim0.3$\,Myr near
-$2\times10^4$\,K), so there pressure cannot equalize and a small time shift becomes
+$2\times10^4$\,K), so there pressure cannot equalize (the isobaric-to-isochoric
+transition of \citealt{burkert00}) and a small time shift becomes
 a large temperature difference: the denser gas is already at the floor while its
 neighbours are still at a few $\times10^4$\,K. In linear theory $|\delta T/T|$ then
 peaks at $\approx230$--300 times the seed amplitude, for all $x$. Any seed above
@@ -408,7 +498,10 @@ happens next depends on the wavelength and on the thermal model
   only slowly (to $\sim50$ by $10\,\tcool$ and $\sim20$ by $300\,\tcool$). With the
   UV background it damps away within $\sim10$ cooling times (below the seed amplitude by
   $\sim15\,\tcool$ and $\sim10^{-2}$ of it by $30\,\tcool$): gas at $\Teq$ is thermally stable, so compressions
-  radiate away their excess heat out of phase with the wave.
+  radiate away their excess heat out of phase with the wave. This is the radiative
+damping of sound waves of \citet{field65}, whose rate scales as $k^2$ at long
+wavelengths \citep[see also][]{waters19}: the $x=1$ mode below damps about 100
+times more slowly than the $x=0.1$ mode.
 \item \emph{Intermediate wavelengths} ($x=1$): the density keeps growing after
   cooling, driven by the velocity imprinted during cooling, and peaks at $\sim35$
   after $10$--$20\,\tcool$, about a quarter of the cold sound-crossing time. It then
@@ -644,7 +737,12 @@ $\lambda/c_{s,\rm cold}\approx17x\,\tcool$ (Figure~\ref{fig:validation}); our
 cloud runs stop at $3\,\tcool$. If $\delta T/T$ reaches order
 unity during cooling, which here happens for $A\gtrsim0.02$, parts of the cloud
 reach the floor while their neighbours are still hot and are crushed; this is
-the isochoric fragmentation picture of \citet{mccourt18}.
+the isochoric fragmentation picture of \citet{mccourt18}. \citet{burkert00} found the
+same inertial growth after their isobaric-to-isochoric transition (their eq.~27),
+but for perturbations that start isochoric ($K\lesssim1$, i.e.\ $x\gtrsim5$) they
+expected the reversed pressure gradient to erase the fluctuation once the gas had
+cooled. With a floor at $10^4$\,K we find instead continued growth for many cooling
+times (Figure~\ref{fig:validation}).
 
 \begin{figure}[H]
 \centering
@@ -1021,6 +1119,36 @@ perturbation becomes a sound wave in the cold gas (Section~\ref{sec:validation})
 \end{itemize}
 
 \begin{thebibliography}{99}
+\bibitem[Balbus(1986)]{balbus86}
+Balbus, S.~A. 1986, ApJ, 303, L79
+\bibitem[Balbus \& Soker(1989)]{balbus89}
+Balbus, S.~A., \& Soker, N. 1989, ApJ, 341, 611
+\bibitem[Burkert \& Lin(2000)]{burkert00}
+Burkert, A., \& Lin, D.~N.~C. 2000, ApJ, 537, 270
+\bibitem[Choudhury et al.(2019)]{choudhury19}
+Choudhury, P.~P., Sharma, P., \& Quataert, E. 2019, MNRAS, 488, 3195
+\bibitem[Field(1965)]{field65}
+Field, G.~B. 1965, ApJ, 142, 531
+\bibitem[Gronke \& Oh(2020)]{gronke20}
+Gronke, M., \& Oh, S.~P. 2020, MNRAS, 494, L27
+\bibitem[Hennebelle \& P\'erault(1999)]{hennebelle99}
+Hennebelle, P., \& P\'erault, M. 1999, A\&A, 351, 309
+\bibitem[Hennebelle \& P\'erault(2000)]{hennebelle00}
+Hennebelle, P., \& P\'erault, M. 2000, A\&A, 359, 1124
+\bibitem[Koyama \& Inutsuka(2000)]{koyama00}
+Koyama, H., \& Inutsuka, S. 2000, ApJ, 532, 980
+\bibitem[McCourt et al.(2012)]{mccourt12}
+McCourt, M., Sharma, P., Quataert, E., \& Parrish, I.~J. 2012, MNRAS, 419, 3319
+\bibitem[Mohapatra et al.(2023)]{mohapatra23}
+Mohapatra, R., Sharma, P., Federrath, C., \& Quataert, E. 2023, MNRAS, 525, 3831
+\bibitem[Pizzolato \& Soker(2005)]{pizzolato05}
+Pizzolato, F., \& Soker, N. 2005, ApJ, 632, 821
+\bibitem[S\'anchez-Salcedo et al.(2002)]{sanchez02}
+S\'anchez-Salcedo, F.~J., V\'azquez-Semadeni, E., \& Gazol, A. 2002, ApJ, 577, 768
+\bibitem[Sharma et al.(2012)]{sharma12}
+Sharma, P., McCourt, M., Quataert, E., \& Parrish, I.~J. 2012, MNRAS, 420, 3174
+\bibitem[Waters \& Proga(2019)]{waters19}
+Waters, T., \& Proga, D. 2019, ApJ, 875, 158
 \bibitem[Das et al.(2021)]{das21}
 Das, H.~K., Choudhury, P.~P., \& Sharma, P. 2021, MNRAS, 502, 4935
 \bibitem[Haardt \& Madau(2012)]{hm12}
