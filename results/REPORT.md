@@ -40,11 +40,11 @@ the UV background (§4.6). The list of corrections is at the end.
 
    | x = λ/(c_s t_cool) | 0.03 | 0.1 | 0.3 | 1 | 3 | 10 |
    |---|---|---|---|---|---|---|
-   | growth while cooling | 57 | 27 | 10 | 3.4 | 1.3 | 1.03 |
-   | growth by 2.5 t_cool | 123 | 103 | 68 | 20 | 3.6 | 1.2 |
+   | growth while cooling | 71 | 33 | 11 | 3.6 | 1.3 | 1.03 |
+   | growth by 3 t_cool | 124 | 103 | 66 | 24 | 4 | 1.3 |
 
-   Metallicity enters mostly through c_s t_cool; at fixed x, Z = 0.1 and Z = 1
-   differ by less than ~50%.
+   (linear theory; the simulations agree). Metallicity enters mostly through
+   c_s t_cool: at fixed x, Z = 0.05 and Z = 1 differ by ≲ 30%.
 3. **Finite clouds behave like the infinite medium when L ≳ 1.5 c_s t_cool**
    (Fig. 6). Only clouds smaller than about c_s t_cool get the extra isobaric
    (compression) amplification, up to ~10³.
@@ -162,7 +162,21 @@ well (Fig. 18).
 
 ### 4.2 Growth versus λ/(c_s t_cool) (Figs. 3–5)
 
-{{LINEAR_CIE}}
+In linear theory (Fig. 3), the amplification of an infinite medium starting at
+10⁶ K (Z = 0.3) while it cools falls from ~70 at x = 0.03 to 3.6 at x = 1 and ~1
+for x ≳ 10. Including the post-cooling phase to 3 t_cool it is ~120, 24 and 1.3.
+In a small cloud held at constant pressure, the compression adds a large
+factor: ~10³ while cooling at x ≲ 0.1, ~3–4×10³ by 3 t_cool. Starting cooler
+leaves less of the cooling curve to traverse: from 2.5×10⁵ K the infinite-medium
+amplification is ≲ 25 (Fig. 3b). In the heated medium of Das et al., a mode
+would grow only 2.3× (isobaric) or 1.2× (isochoric) over the same elapsed time,
+because there t_cool stays fixed, while in cooling gas it shrinks by orders of
+magnitude.
+
+Fig. 4 turns this into the smallest seed that reaches δρ/ρ ~ 1 by 3 t_cool. In an
+infinite medium or a large cloud it is ~1% for x ≲ 0.3, 4% at x = 1 and 25% at
+x ≈ 3; for x ≳ 10 no seed below order unity gets there. In a small isobaric
+cloud it is 2×10⁻⁴ to 2×10⁻³.
 
 ![linear](figures/fig3_linear_amplification.png)
 

@@ -284,7 +284,7 @@ def fig_cloud():
         a.set_xlabel(r"$\lambda_0 / (c_s t_{cool})_0$  (cloud gas)")
         a.set_ylim(0.8, 3e3)
     ax[0].set_ylabel(r"max $|\delta\rho/\rho|/A_0$ of seeded mode")
-    ax[0].set_title("Cloud runs: growth while cooling to 10$^4$ K")
+    ax[0].set_title("Cloud runs: growth while cooling (to 1.5 T$_{floor}$)")
     ax[1].set_title("Including post-cooling phase (to 2.5 $t_{cool}$)")
     ax[2].set_xlabel(r"interior max $\rho/\bar\rho - 1$ (edges excluded)")
     ax[2].set_ylabel(r"whole-cloud max$(\rho)/\bar\rho - 1$ (incl. edges)")
