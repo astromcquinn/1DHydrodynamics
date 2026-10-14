@@ -118,10 +118,11 @@ def fig_clouds(sweep="pert_cloud", out="fig20_pert_clouds.png", keep=None):
                                mfc="none" if cool == "ciecl_z" else PCOL[pt])
                     Lx = p["L_cloud"] / d["cs_tcool0"]
                     x = p["lam"] / d["cs_tcool0"]
+                    Lkpc, chi = p["L_cloud"], p["chi"]
         a.set_xticks(range(len(PERTS)))
         a.set_xticklabels([PLAB[p].split(" (")[0] for p in PERTS], fontsize=8.5)
         a.axhline(1, color=INK2, lw=0.6, ls="--")
-        a.set_title(f"Cloud, n$_{{bg}}$ = {nbg:g}, L = 50 kpc, χ = {p['chi']:g}: "
+        a.set_title(f"Cloud, n$_{{bg}}$ = {nbg:g}, L = {Lkpc:g} kpc, χ = {chi:g}: "
                     f"L ≈ {Lx:.2g}, λ ≈ {x:.2g} c$_s$t$_{{cool}}$")
     ax[0].set_ylabel(r"$|\delta\rho/\rho|$ / A of the seeded mode")
     from matplotlib.lines import Line2D

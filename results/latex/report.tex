@@ -157,10 +157,10 @@ infinite, seed types       & 60 & 512   & 6.6--660        & --        & 512     
 clouds                     & 36 & 2048  & 90--300         & 683       & 80--270   & 3.0      & 1\,s--8\,min \\
 large clouds               & 18 & 2048  & 900--9000       & 683       & 80--270   & 3.0      & 2--8\,s \\
 density scaling            & 3  & 2048  & 150--15000      & 683       & 152       & 3.0      & 4\,s \\
-seed amplitude             & 30 & 2048  & 150             & 683       & 152       & 6.0      & AMPWALL \\
-resolution                 & 6  & 4096, 16384 & 150       & 1365, 5461 & 303, 1214 & 3.0     & RESWALL \\
+seed amplitude             & 30 & 2048  & 150             & 683       & 152       & 6.0      & 3\,s--6\,min \\
+resolution                 & 6  & 4096, 16384 & 150       & 1365, 5461 & 303, 1214 & 3.0     & 5--7\,min, $>1$\,h \\
 seed types, $n=10^{-2}$    & 10 & 2048  & 150             & 683       & 152       & 3.0      & 15--19\,s \\
-seed types, $n=10^{-3}$    & 10 & 6144  & 400             & 3072      & 171       & 3.0      & PERTWALL \\
+seed types, $n=10^{-3}$    & 10 & 6144  & 400             & 3072      & 171       & 3.0      & 3--9\,min \\
 cooling-switch test        & 3  & 2048, 8192 & 90         & 683, 2731 & 307, 1229 & 3.0      & 1--20\,min \\
 \bottomrule
 \end{tabular}
@@ -306,6 +306,15 @@ $\ln(10^6/1.5\times10^4)\approx4.2$ e-folds of temperature to traverse, after wh
 it stops cooling. That is why the amplification of cooling gas is finite and is
 set by the shape of $\Lambda(T)$, not by time.
 
+One consequence is a question that does not arise in a heated medium: \emph{how
+large must a seed be to go nonlinear?} With steady exponential growth any seed
+eventually does, given enough cooling times. \citet{das21} accordingly seed their
+nonlinear runs with $\drho=10^{-5}$ ($10^{-4}$ in the high-resolution runs) and let
+them grow; they do not map a threshold amplitude. Their only test with large
+initial amplitude, a square-wave density pulse, shows that nonlinear seeds erase
+the dependence on isochoric stability. In a cooling gas the finite amplification
+defines a minimum seed amplitude (Figure~\ref{fig:minamp}).
+
 \begin{table}[H]
 \centering
 \small
@@ -337,12 +346,22 @@ the two at equal elapsed time, as an earlier draft did, therefore mostly measure
 how fast $\tcool$ collapses, not a difference in the instability.
 
 \paragraph{Linear in which variable?} ``Linear'' requires both $|\drho|\ll1$ and
-$|\delta T/T|\ll1$. For short wavelengths the two are equal and opposite. For
-long wavelengths ($x\gtrsim1$) the density is nearly frozen while $\delta T/T$
-grows by up to a factor $\sim45$ during cooling (Section~\ref{sec:isochoric}):
-a seed of $\drho=0.02$ produces $\delta T/T\approx0.9$ near the end of cooling.
-The temperature perturbation then goes nonlinear first, and the threshold seed
-amplitude must be set by it (Figure~\ref{fig:minamp}).
+$|\delta T/T|\ll1$, and in cooling gas the temperature perturbation goes nonlinear
+first. At long wavelengths ($x\gtrsim1$) the density is nearly frozen while
+$\delta T/T$ grows $\sim45$-fold during most of the cooling
+(Section~\ref{sec:isochoric}). At \emph{every} wavelength, the last stage of cooling
+is faster than sound can cross $\lambda$ ($\tcool$ drops to $\sim0.3$\,Myr near
+$2\times10^4$\,K), so there pressure cannot equalize and a small time shift becomes
+a large temperature difference: the denser gas is already at the floor while its
+neighbours are still at a few $\times10^4$\,K. In linear theory $|\delta T/T|$ then
+peaks at $\approx230$--300 times the seed amplitude, for all $x$. Any seed above
+$\drho\approx0.004$ therefore produces an order-unity temperature contrast at the end
+of cooling (Figure~\ref{fig:minamp}). This contrast is brief, lasting about one
+cooling time at $2\times10^4$\,K, and it barely affects the density: the
+simulations with $A=10^{-2}$ follow the linear prediction for $\drho$
+(Figure~\ref{fig:infsims}). It does mean that an e-folding count such as $N=4.9$
+above describes the density only, and that the temperature field at the end of
+cooling is nonlinear for most seeds of interest.
 
 %======================================================================
 \section{Results}
@@ -450,9 +469,10 @@ $Z=0.3$) for three initial temperatures.}
 Figure~\ref{fig:minamp} turns this into the smallest seed that goes nonlinear by
 $3\,\tcool$. Using the density alone, it is about 1\% for $x\lesssim0.3$ in an
 infinite medium, 4\% at $x=1$ and 25\% at $x\approx3$, and $2\times10^{-4}$ to
-$2\times10^{-3}$ in a small isobaric cloud. Using the temperature as well, the
-threshold at $x\gtrsim1$ drops to MINAMPT, because $\delta T/T$ reaches order
-unity long before $\drho$ does.
+$2\times10^{-3}$ in a small isobaric cloud. Using the temperature instead, the
+threshold is $\approx0.004$ at every wavelength in an infinite medium and
+$5\times10^{-4}$ to $1.5\times10^{-3}$ in a small isobaric cloud, set by the brief
+temperature contrast at the end of cooling (Section~\ref{sec:whyheated}).
 
 \begin{figure}[H]
 \centering
@@ -622,7 +642,34 @@ $2.5\,\tcool$ follows Eq.~(\ref{eq:isoscaling}) over two decades in $\lambda$.}
 
 \subsection{Seed amplitude and resolution}
 \label{sec:resolution}
-AMPTEXT
+Figure~\ref{fig:amplitude} follows a cloud with $L=50$\,kpc and $L/\lambda=4.5$ for
+five seed amplitudes and $6\,\tcool$:
+\begin{itemize}
+\item $n=10^{-2}$ ($L\approx10\,\cstc$, $x\approx2$): the seeded mode grows by the
+  same factor for every $A\le0.1$, $\times1.7$ while cooling, $\times7$ by $3\,\tcool$
+  and $\times14$ by $6\,\tcool$ with the floor ($\times2.2$, 12 and 7--20 with the UV
+  background), and it is still growing at the end with the floor. $A=0.3$ goes
+  nonlinear after $\sim2\,\tcool$ and forms sheets $\sim100$ times denser than the
+  mean. (The spikes after $\sim5\,\tcool$ in the UV panel are the dense sheets that
+  form at the cloud edges entering the interior window; the mode amplitude itself
+  is smooth.)
+\item $n=10^{-3}$ ($L\approx\cstc$): every seed, even $A=10^{-3}$, reaches an
+  interior contrast of 15--30 at $1.5$--$1.8\,\tcool$, when the cloud is compressed
+  $\sim400$ times; larger seeds get there sooner ($A=0.3$: $\sim90$ at
+  $0.8\,\tcool$). Afterwards the interior smooths out, to $\lesssim0.1$ with the floor
+  and $\lesssim10^{-3}$ with the UV background.
+\item $n=10^{-4}$ ($L\approx0.1\,\cstc$): the cloud collapses at $\approx\tcool$, by
+  100--350 in density. The interior contrast peaks at 5--30 just before the
+  collapse and is then erased. With the floor, a seed of $A=10^{-3}$ grows by
+  $\approx60$ while cooling, converged with resolution (below). That is close to the
+  infinite-medium value at this $x\approx0.02$ ($\approx70$) and far below the
+  isobaric limit ($\approx10^3$): this cloud stays in pressure balance only down to
+  $\sim4\times10^5$\,K (Section~\ref{sec:backgrounds}), and most of the isobaric
+  amplification would come later.
+\end{itemize}
+So at $L\gtrsim\cstc$ the outcome is set by the seed amplitude and linear theory,
+whereas clouds with $L\lesssim\cstc$ produce large but transient interior contrasts
+from any seed, through their collapse.
 
 \begin{figure}[H]
 \centering
@@ -633,14 +680,21 @@ densities, followed to $6\,\tcool$. Top: CIE + floor; bottom: UV background.}
 \label{fig:amplitude}
 \end{figure}
 
-RESTEXT
+The small cloud ($n=10^{-4}$, $L\approx0.1\,\cstc$) is compressed 130--350 times in
+density and is the hardest case to resolve (Figure~\ref{fig:resolution}). Between
+2048 and 4096 cells the growth of the seeded mode while cooling is converged (61
+and 61 for $A=10^{-3}$, 90 and 91 for $A=10^{-2}$, 14.5 and 14.8 for $A=0.1$). The
+peak interior contrast changes by 10\% for small seeds (5.3 and 5.9 for
+$A=10^{-3}$) but by 45\% for $A=0.1$ (20 and 30), so for large seeds it is a lower
+limit. The late-time smoothing appears at both resolutions. Runs with 16384 cells
+are in progress.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{figP_chi1_resolution.png}
 \caption{Interior maximum of $\rho/\bar\rho-1$ for the small cloud
-($n=10^{-4}$, $L=50$\,kpc, CIE + floor) with 2048, 4096 and 16384 cells (683,
-1365 and 5461 across the cloud), for three seed amplitudes.}
+($n=10^{-4}$, $L=50$\,kpc, CIE + floor) with 2048 and 4096 cells (683 and 1365
+across the cloud), for three seed amplitudes. The 16384-cell runs will be added.}
 \label{fig:resolution}
 \end{figure}
 
@@ -798,7 +852,16 @@ $3\,\tcool$.}
 \label{fig:pertlinear}
 \end{figure}
 
-SEEDTEXT
+The clouds show the same ordering (Figure~\ref{fig:pertclouds}). At $n=10^{-3}$
+($L\approx3\,\cstc$, $x\approx0.17$), by $2.5\,\tcool$ the density seed grows 55--57
+times, the temperature seed 45, the metallicity seed 27, the sound wave 11 and the
+velocity seed 6. At $n=10^{-2}$ ($L\approx8\,\cstc$, $x\approx1.7$) the numbers are
+10, 8, 3.3, 3.2 and 1.2. The two cooling models agree to a few per cent, except
+for the growth while cooling at $x\approx0.17$, where the UV background gives
+10--20\% more. For $A=0.1$ at $x=0.1$ in an infinite medium, density,
+temperature and metallicity seeds condense into clumps 15--34 times denser than
+the mean, sound waves reach $\sim1.4$ and velocity seeds $\sim0.2$
+(Figure~\ref{fig:pertnl}).
 
 \begin{figure}[H]
 \centering
