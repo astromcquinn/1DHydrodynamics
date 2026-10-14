@@ -16,8 +16,8 @@
 \newcommand{\LT}{\Lambda_T}
 \newcommand{\drho}{\delta\rho/\rho}
 
-\title{Growth of perturbations in cooling gas:\\ a 1D survey with gPLUTO and linear theory}
-\author{Working notes for the CGM cooling-cloud project\\
+\title{Thermal instability in cooling circumgalactic gas:\\ linear theory and 1D simulations}
+\author{Working draft for the CGM cooling-cloud project\\
 \small (prepared with Claude; code and data on branch \texttt{claude/modest-knuth-40c0vv} of \texttt{astromcquinn/1DHydrodynamics})}
 \date{\today}
 
@@ -25,126 +25,156 @@
 \maketitle
 
 \begin{abstract}
-We study how small perturbations grow in gas that is \emph{cooling}, i.e.\ with no
-heating, in contrast to \citet{das21}, where heating balances cooling on average.
-The setup has no initial density contrast: a uniform $10^6$\,K medium in which
-radiative cooling is switched on in a region of length $L$ (a ``cloud''), or
-everywhere (the infinite medium, $L\to\infty$). About 340 one-dimensional gPLUTO
-simulations are compared with a linear theory integrated along the cooling
-background, for three cooling models (an approximate collisional-equilibrium
-curve with a $10^4$\,K floor, Cloudy collisional equilibrium with the same floor,
-and Cloudy in the \citealt{hm12} UV background) and five kinds of seed
-perturbation (density, temperature, sound wave, velocity, metallicity). The
-growth is controlled by $x=\lambda/(\cstc)$ and $L/(\cstc)$. Per e-fold of
-cooling, a short-wavelength perturbation grows by as many e-folds as one in a
-medium with state-independent heating grows per cooling time; but a cooling gas has
-only $\approx4$ e-folds of temperature to traverse, so the amplification is finite
-($\lesssim10^2$ in an infinite medium). The approach, linear equations integrated
-along a cooling background without heating and checked against 1D simulations,
-follows \citet{schwarz72}, who applied it to interstellar gas cooling from 8200\,K;
-the short-wavelength growth law and the existence of a threshold seed amplitude are
-also known for power-law cooling \citep{field65,balbus86,burkert00}. Here the
-problem is worked out for the circumgalactic medium (cooling from $10^6$\,K with
-realistic collisional and photoionization-equilibrium cooling), for finite cooling
-regions, and through the evolution long after the gas has cooled. Much of it happens after the gas has cooled. After that the
-perturbation becomes a sound wave in the cold gas, which in the UV background
-damps away.
+Circumgalactic gas that cools without being reheated does not have a steady
+background against which perturbations can grow exponentially. Following the
+approach of \citet{schwarz72} for interstellar gas, we integrate the linearized
+equations along the cooling history and compare them with about 340
+one-dimensional gPLUTO simulations. The gas starts as a uniform medium at
+$10^6$\,K and $n=10^{-4}$--$10^{-2}$\,cm$^{-3}$, with radiative cooling switched on
+everywhere (an infinite medium) or in a region of length $L$ (a cloud with no
+initial density contrast). We use collisional-equilibrium cooling with a $10^4$\,K
+floor and Cloudy cooling in the \citet{hm12} UV background, and five kinds of seed
+perturbation. The growth depends on $x=\lambda/(\cstc)$ and $L/(\cstc)$:
+\begin{itemize}
+\item Short wavelengths gain $(2-\LT)/\gamma$ e-folds per e-fold of cooling
+  \citep{schwarz72,balbus86,burkert00}. A gas cooling from $10^6$\,K therefore
+  amplifies them by only $\sim10^2$, and a seed of $\gtrsim1\%$ is needed for the
+  density to go nonlinear.
+\item Long wavelengths ($x\gtrsim1$) hardly change in density while the gas cools.
+  The pressure pattern set up during cooling then drives growth of
+  $G-1\approx24\,x^{-2}$ by $2.5\,\tcool$. This is the inertial growth identified by
+  \citet{schwarz72} and \citet{burkert00}, carried past the end of cooling.
+\item At the end of cooling the temperature perturbation becomes nonlinear for
+  seeds above $\sim0.4\%$ at every wavelength, while the density stays linear.
+\item Afterwards the density perturbation turns into a sound wave in the cold gas.
+  The UV background damps it at short wavelengths; a hard floor does not.
+\item Clouds larger than $\sim1.5\,\cstc$ behave like the infinite medium. Smaller
+  clouds fall out of pressure balance as they cool and amplify far less than the
+  isobaric limit of \citet{mathews78}.
+\item Temperature and metallicity seeds grow about half and a third as much as density
+  seeds. Sound-wave and velocity seeds grow 10--40 times less at short wavelengths.
+\end{itemize}
 \end{abstract}
 
 \tableofcontents
 
 %======================================================================
-\section{Relation to previous work}
+\section{Introduction}
 \label{sec:prior}
 %======================================================================
 
-\paragraph{Thermal instability of a heated equilibrium.} \citet{field65} derived
-the isobaric, isochoric and isentropic criteria for a static medium in which
-heating balances cooling, and the full dispersion relation, including the damping
-of sound waves by radiative relaxation. \citet{balbus86} reformulated the criterion
-in Lagrangian form ($\mathcal{L}\to\mathcal{L}/T$), valid for a time-dependent
-background. \citet{waters19} classified all linear regimes between the isobaric and
-isochoric limits for a heated (photoionized) gas, including gas off the
-equilibrium curve, and followed damped oscillations of large clouds in 1D.
-\citet{mccourt12} and \citet{sharma12} added gravitational stratification: with
-heating in every layer, cold gas condenses only where $t_{\rm TI}/t_{\rm ff}\lesssim10$,
-and buoyancy saturates the growth. \citet{das21}, our main comparison, include
-metallicity gradients and fluctuations in a uniform, heated medium.
+Cold ($\sim10^4$\,K) gas is common in the circumgalactic medium (CGM), and one
+route to it is thermal instability of the hot gas. Most recent work studies
+instability in a medium where heating balances cooling on average, as expected
+if feedback regulates the halo. Here we ask the complementary question: how do
+small perturbations grow in gas that is simply cooling, with nothing to stop it?
+This applies, for example, to gas cooling after a heating episode, or to a
+region whose cooling outpaces feedback. This note grew out of a student project
+(Appendix~\ref{sec:critique}) and asks it for the hot CGM.
 
-\paragraph{Perturbations on a cooling background.} The closest precedent for this
-work is \citet{schwarz72}. For interstellar gas cooling at constant density from
-8200\,K without heating, they integrated the linearized equations with
-time-dependent coefficients (their \S IV), obtained the short-wavelength law
-$d\ln n_1/dt=(2-s_T)/(\gamma\tau_c)$ and its integral $n_1\propto(T_0/T)^{(2-s_T)/\gamma}$
-for constant slope $s_T$ (their eqs.~26--30; our Eqs.~\ref{eq:perefold} and
-\ref{eq:timeshift}), compared it with the heated rate $(1-s_T)/(\gamma\tau_c)$, found
-that long wavelengths keep growing ``long after the instability shuts off'' through
-the inertia of the flow, and verified all of this with 1D simulations. They also
-identified a threshold: ``an initial perturbation of minimum amplitude (between 5
-and 10 percent) is needed'' for a large final contrast, which they called ``a key
-difference between instability in a medium in equilibrium, and instability in a
-cooling medium.'' \citet{mathews78} integrated the same short-wavelength law along
-the compressing, cooling parcels of a steady cooling flow (our isobaric background)
-and found growth factors of $10^{4\pm1}$. The no-heating case goes back to
-\citet{field65}: in his \S VI a static medium with $\mathcal{L}\propto\rho
-T^N$ and no heat input has growing condensations for $N<2$, compared with $N<1$
-for a medium heated at a rate per unit mass independent of $\rho$ and $T$. The
-general Lagrangian solution of \citet{balbus86} (his eq.~23) gives the
-short-wavelength growth along any homogeneous cooling or contracting background;
-for $\mathcal{L}=n^2\Lambda(T)$ it reduces to our Eq.~(\ref{eq:perefold}). Closest
-to this work, \citet{burkert00} studied an isochorically cooling medium without
-heating with $\Lambda\propto T^\beta$. They found the scale-independent isobaric
-growth $\drho\propto(T_0/T)^{(2-\beta)/\gamma}$ (their eq.~22), which is our
-Eq.~(\ref{eq:timeshift}) for a power law; that growth stops once the cooling time
-falls below the sound-crossing time of the perturbation; that the perturbation then
-grows only slowly through the inertia of the gas; and that a minimum wavenumber,
-depending on the seed amplitude, is needed to go nonlinear before that transition
-(their eq.~28). \citet{koyama00} analysed thermal instability in an isobarically
-contracting post-shock layer with frozen background coefficients, valid only early
-in the cooling; \citet{hennebelle99,hennebelle00} derived self-similar solutions for
-a homologously cooling, compressed region without heating.
+\paragraph{Heated equilibria.} \citet{field65} derived the isobaric, isochoric and
+isentropic instability criteria for a static medium in thermal balance, and the
+full dispersion relation, including the damping of sound waves by radiative
+relaxation. \citet{balbus86} recast the criterion in Lagrangian form
+($\mathcal{L}\to\mathcal{L}/T$), valid for a time-dependent background.
+\citet{waters19} classified the linear regimes between the isobaric and isochoric
+limits for heated, photoionized gas, including gas off the equilibrium curve.
+\citet{mccourt12} and \citet{sharma12} added gravity: with heating in every layer,
+cold gas condenses only where $t_{\rm TI}/t_{\rm ff}\lesssim10$, and buoyancy saturates
+the growth. \citet{das21}, the starting point of this project, studied a uniform,
+heated medium including metallicity gradients and fluctuations.
 
-\paragraph{Seed amplitude and condensation.} In cooling flows linear perturbations
-grow only by modest, power-law factors, limited by buoyancy and advection
-\citep{balbus89}, and condensation requires nonlinear seeds: blobs with
-$\delta\rho/\rho\gtrsim1$--2 in the ``cold feedback'' model of \citet{pizzolato05},
-and seeds of order unity in the unheated runs of \citet{sharma12} (their appendix A)
-and \citet{mccourt12}. In heated haloes the condensation threshold in
-$t_{\rm cool}/t_{\rm ff}$ rises with the seed amplitude \citep{choudhury19}, and
-density fluctuations from turbulence compete with mixing and buoyancy
-\citep{mohapatra23}. In the heated, bistable interstellar medium a finite trigger is
-needed because the warm phase is linearly stable: a roughly transonic converging
-flow on scales $\gtrsim c_s t_{\rm cool}$ \citep{hennebelle99}, with magnetic fields
-raising the threshold \citep{hennebelle00}; and small-scale turbulent forcing can
-suppress condensation \citep{sanchez02}. In 3D, clouds that lose pressure balance
-by cooling fragment (``shatter'') only if their final density contrast exceeds
-$\sim300$, whether or not the initial contrast was linear
-\citep{mccourt18,gronke20}.
-
-\paragraph{What is new here.} The method, the short-wavelength growth law, continued
-growth at long wavelengths and the threshold amplitude are all in
-\citet{schwarz72}, for interstellar gas cooling from 8200\,K; \citet{burkert00}
-treated power-law cooling analytically. The new elements are:
+\paragraph{Cooling backgrounds.} The no-heating case goes back to \citet{field65},
+whose \S VI shows that a static medium with $\mathcal{L}\propto\rho T^N$ and no heat
+input has growing condensations for $N<2$. With heating per unit mass that is
+independent of $\rho$ and $T$, the condition is $N<1$. The closest precedent for this
+work is \citet{schwarz72}, who studied interstellar gas cooling at constant density
+from 8200\,K without heating:
 \begin{itemize}
-\item the hot ($10^6$\,K) circumgalactic regime, with Cloudy cooling with and without
-  the UV background, giving the amplification and the minimum seed amplitude as
-  functions of $\lambda/(\cstc)$ and density, and the comparison with the heated
-  medium of \citet{das21};
-\item finite cooling regions embedded in non-cooling gas ($\chi=1$ clouds), and
-  where the isobaric (small-cloud) limit of \citet{mathews78} breaks down;
-\item a quantitative law for the long-wavelength regime, $G-1\approx24(\cstc/\lambda)^2$
-  by $2.5\,\tcool$ (continued growth, as \citealt{schwarz72} found, rather than the
-  erasure \citealt{burkert00} suggested for $K\lesssim1$);
-\item the evolution after cooling for up to $10^3\,\tcool$: sound waves in the cold
-  gas that persist with a floor and damp with a UV background;
-\item the temperature perturbation, which becomes nonlinear at the end of cooling
-  for seeds above $\sim0.4\%$ at every wavelength, while the density stays linear
-  \citep[contrast][who find non-isobaric behaviour only in the nonlinear regime of a
-  heated gas]{waters19};
-\item temperature, sound-wave, velocity and metallicity seeds alongside density seeds;
-\item systematic validation against gPLUTO simulations, including the numerical
-  mixing of the cooling switch at cloud edges.
+\item they integrated the linearized equations, whose coefficients change in time
+  (their \S IV), and checked them against 1D simulations;
+\item they obtained the short-wavelength law $d\ln n_1/dt=(2-s_T)/(\gamma\tau_c)$, which
+  integrates to $n_1\propto(T_0/T)^{(2-s_T)/\gamma}$ for a cooling curve of constant
+  slope $s_T$ (their eqs.~26--30), and compared it with the heated rate
+  $(1-s_T)/(\gamma\tau_c)$;
+\item they found that long wavelengths keep growing ``long after the instability
+  shuts off'', through the inertia of the flow;
+\item they found that ``an initial perturbation of minimum amplitude (between 5 and 10
+  percent) is needed'' for a large final contrast. They called this ``a key
+  difference between instability in a medium in equilibrium, and instability in a
+  cooling medium.''
 \end{itemize}
+Two other analyses cover the short-wavelength limit:
+\begin{itemize}
+\item \citet{mathews78} integrated the same law along cooling-flow parcels that are
+  compressed as they cool (our isobaric background) and found growth factors of
+  $10^{4\pm1}$;
+\item \citet{balbus86}'s eq.~23 gives it for any uniformly expanding or contracting
+  background.
+\end{itemize}
+\citet{burkert00} treated a medium cooling at constant density without heating, with
+$\Lambda\propto T^\beta$, analytically:
+\begin{itemize}
+\item their eq.~22 is the power-law case of our Eq.~(\ref{eq:timeshift});
+\item the growth stalls when the cooling time falls below the sound-crossing time,
+  after which the perturbation coasts on its own momentum (their eq.~27);
+\item going nonlinear before that requires a minimum wavenumber, which depends on the
+  seed amplitude (their eq.~28).
+\end{itemize}
+Related analyses with an evolving background include:
+\begin{itemize}
+\item \citet{koyama00}: a cooling post-shock layer, with frozen coefficients valid
+  early in the cooling;
+\item \citet{hennebelle99,hennebelle00}: self-similar solutions for a cooling,
+  compressed region without heating.
+\end{itemize}
+
+\paragraph{Seed amplitudes.} In cooling flows, buoyancy and advection limit linear
+growth to modest power-law factors \citep{balbus89}, so condensation needs large
+seeds:
+\begin{itemize}
+\item $\delta\rho/\rho\gtrsim1$--2 in the ``cold feedback'' blobs of \citet{pizzolato05};
+\item seeds of order unity in the unheated runs of \citet[their appendix A]{sharma12}
+  and \citet{mccourt12}.
+\end{itemize}
+Thresholds also appear in heated media, for different reasons:
+\begin{itemize}
+\item in heated haloes, the critical $t_{\rm cool}/t_{\rm ff}$ rises with the seed
+  amplitude \citep{choudhury19};
+\item turbulent density fluctuations compete with mixing and buoyancy
+  \citep{mohapatra23};
+\item in the heated, bistable interstellar medium the warm phase is linearly stable,
+  so condensation needs a roughly transonic converging flow on scales
+  $\gtrsim c_st_{\rm cool}$ \citep{hennebelle99}, and more with a magnetic field
+  \citep{hennebelle00};
+\item small-scale turbulent forcing can prevent condensation \citep{sanchez02}.
+\end{itemize}
+In 3D, a cloud that loses pressure balance as it cools breaks up (``shatters'')
+only if its final density contrast exceeds $\sim300$, whether or not its initial
+contrast was small \citep{mccourt18,gronke20}.
+
+\paragraph{This work.} We adopt the approach of \citet{schwarz72}, linear theory along
+the cooling history checked against simulations, and apply it to the hot CGM.
+Specifically:
+\begin{itemize}
+\item gas cooling from $10^6$\,K with Cloudy rates, with and without the UV
+  background, giving the amplification and the minimum seed as functions of
+  $\lambda/(\cstc)$ and density, and comparing with the heated medium of \citet{das21};
+\item finite cooling regions embedded in gas that does not cool, and the point
+  where they depart from the isobaric limit of \citet{mathews78};
+\item a calibrated law for long wavelengths, consistent with \citet{burkert00}'s
+  solution carried past the end of cooling;
+\item the evolution after cooling, followed to $10^3\,\tcool$;
+\item the temperature perturbation, which goes nonlinear before the density at the end
+  of cooling; \citet{waters19} find departures from isobaric behaviour only in the
+  nonlinear regime of heated gas;
+\item temperature, sound-wave, velocity and metallicity seeds as well as density
+  seeds;
+\item the numerical effects of switching cooling on in only part of the gas.
+\end{itemize}
+Section~\ref{sec:setup} describes the setup, Section~\ref{sec:linear} the linear
+theory, Section~\ref{sec:results} the results and Section~\ref{sec:discussion} the
+physics we leave out.
 
 %======================================================================
 \section{Setup}
@@ -168,14 +198,6 @@ the seed, and (with a UV background) weakly on $n$.
 A periodic box exactly one wavelength long, all of it cooling. This is the
 $L\to\infty$ limit of the cloud. It has no edges and is the cleanest place to
 measure growth.
-
-\paragraph{Relation to the student's setup.} In the student's runs the cloud
-started slightly denser than the background ($\chi\approx1.3$ judging from the
-poster's temperature profiles) and an \texttt{if} statement switched cooling on
-for that gas. $\chi=1$ is the limit with no contrast, which removes $\chi$ as a
-parameter. Earlier drafts also showed $\chi=1.3$, 2 and 5; those results are
-in the git history (commit \texttt{9623051}) and behave in the same way once
-$\lambda$ and $L$ are measured in units of $\cstc$ of the cloud gas.
 
 \subsection{Which gas cools}
 \label{sec:switch}
@@ -326,7 +348,12 @@ equations are integrated together with the background equations,
 using the same cooling tables and interpolation as gPLUTO. The equations are
 linear in the \emph{perturbation} only; the background itself is followed
 exactly through its whole (very nonlinear) cooling history, from $10^6$\,K to
-the floor.
+the floor. This is the procedure of \citet{schwarz72}, generalized to a
+background that may be compressed ($D\neq0$) and to a cooling function of both
+density and temperature. Following one mode in the mass coordinate avoids the
+problem, stressed by \citet{balbus89}, that Eulerian plane-wave growth rates on an
+evolving background miss the change of amplitude caused by the evolution
+itself.
 
 \subsection{The two backgrounds}
 \label{sec:backgrounds}
@@ -334,7 +361,8 @@ The background must be specified by choosing $D(t)$:
 \begin{itemize}
 \item \textbf{Isochoric background ($D=0$)}: the density stays fixed and the
   pressure falls as the gas cools. This is the infinite medium, and the interior of
-  a cloud much larger than $\cstc$, which has no time to be compressed.
+  a cloud much larger than $\cstc$, which has no time to be compressed. It is the
+  background of \citet{schwarz72} and \citet{burkert00}.
 \item \textbf{Isobaric background}: we impose $dp_0/dt=0$ in Eq.~(\ref{eq:bg}),
   i.e.\ $D=(\gamma-1)L/(\gamma p_0)=r/\gamma$. The density rises as the gas cools,
   $\rho_0T_0=$ const. The mode is fixed in the mass coordinate, so its physical
@@ -344,7 +372,7 @@ The background must be specified by choosing $D(t)$:
   pressure because it does not cool. The background is uniform; the cloud edges
   and the inflow of hot gas are not modelled. Nothing is imposed in the
   simulations: a $\chi=1$ cloud with $L\ll\cstc$ is compressed in this way on its
-  own.
+  own. It is the background of the cooling-flow parcels of \citet{mathews78}.
 \end{itemize}
 The isobaric limit requires $\lambda<L\ll\cstc$ \emph{throughout} the cooling,
 which is restrictive. Along an isobaric track $L\propto1/\rho_0\propto T$,
@@ -362,7 +390,8 @@ limits (Section~\ref{sec:clouds}).
 \tcool(t)\equiv\frac{p_0}{(\gamma-1)L}.
 \label{eq:isobaric}
 \end{equation}
-This is the same instantaneous rate as the isobaric mode of \citet{das21}.
+This is the same instantaneous rate as the isobaric mode of \citet{das21}, and
+the rate of \citet{schwarz72} (their eq.~26) and \citet[their eq.~A6]{mathews78}.
 Integrating it along the cooling background gives a closed form: a short-wavelength
 perturbation is a \emph{time shift} of the cooling history (the denser parcel
 reaches each temperature a little earlier), with
@@ -372,6 +401,9 @@ reaches each temperature a little earlier), with
 1/\gamma & \text{isochoric background (infinite medium)}.\end{cases}
 \label{eq:timeshift}
 \end{equation}
+For a power law $\Lambda\propto T^{s_T}$ and $\beta=1/\gamma$ this is eq.~30 of
+\citet{schwarz72} and eq.~22 of \citet{burkert00}. Eq.~(\ref{eq:timeshift}) holds for
+any $\Lambda(T)$ and either background.
 
 \paragraph{Long wavelength.} The density is frozen ($s$ constant) while
 \begin{equation}
@@ -380,7 +412,12 @@ reaches each temperature a little earlier), with
 \end{equation}
 The temperature and pressure perturbation is driven by the frozen density
 perturbation, and grows on its own wherever $\LT<1$. In the heated medium of
-\citet{das21} the corresponding condition is $\LT<0$.
+\citet{das21} the corresponding condition is $\LT<0$. \citet{burkert00} give the
+early-time solution for $\Lambda\propto T^\beta$ (their eqs.~13--14): the density
+grows only as $\tau^3$, but the gas acquires a velocity
+$V=k\,\tau_c(0)\,\delta v\simeq(\beta-2)K^2A\,\tau^2/2$, with $K=2\pi/(\sqrt\gamma\,x)$
+and $\tau=t/\tau_c(0)$. This velocity drives the growth after cooling
+(Section~\ref{sec:isochoric}).
 
 \subsection{Comparison with a heated medium}
 \label{sec:whyheated}
@@ -536,6 +573,18 @@ For $n=10^{-3}$ and the UV background $\tcool=320$\,Myr, so the Hubble time is o
 $44\,\tcool$; for $n=10^{-2}$ with the floor it is $680\,\tcool$. In the nonlinear
 runs shown later, the sound waves also steepen into shocks and dissipate.
 
+This post-cooling behaviour matches earlier work:
+\begin{itemize}
+\item the damping is the radiative damping of sound waves of \citet{field65};
+\item \citet{waters19} found similar damped oscillations of large clouds settling onto
+  the stable branch of a photoionized gas;
+\item \citet{schwarz72} noted that once the surrounding gas had cooled too, their
+  clouds would eventually disperse.
+\end{itemize}
+In none of these, however, does a heating source restore the contrast. In the CGM
+the outcome therefore depends on whether the cold gas is reheated, or confined by
+hotter surroundings, before the waves disperse it.
+
 \subsection{Growth versus $\lambda/(\cstc)$ in linear theory}
 \label{sec:growthx}
 \textbf{Figures~\ref{fig:linear}--\ref{fig:minamp} and Table~\ref{tab:inf} are
@@ -548,6 +597,12 @@ this limit is hard to reach (Section~\ref{sec:backgrounds}). Metallicity enters 
 $\cstc$; at fixed $x$, $Z=0.05$ and $Z=1$ differ by $\lesssim30\%$. Starting cooler
 leaves less of the cooling curve to traverse: from $2.5\times10^5$\,K the
 infinite-medium amplification is $\lesssim25$ (Figure~\ref{fig:linearT0}).
+\citet{schwarz72} found linear growth of $\sim10^2$, nearly independent of wavelength
+for $\lambda=1$--10\,pc, in interstellar gas cooling from 8200\,K to $\sim30$\,K. That
+is $\ln(270)\approx5.6$ e-folds of cooling, compared with 4.2 for gas cooling from
+$10^6$ to $1.5\times10^4$\,K. The short-wavelength amplification is similar,
+$\sim10^2$. At long wavelengths, however, ours reaches only $\sim35$ ($x=1$) and
+$\sim5$ ($x=10$), even after many cooling times (Figure~\ref{fig:validation}).
 
 \begin{table}[H]
 \centering
@@ -592,6 +647,21 @@ $2\times10^{-3}$ in a small isobaric cloud. Using the temperature instead, the
 threshold is $\approx0.004$ at every wavelength in an infinite medium and
 $5\times10^{-4}$ to $1.5\times10^{-3}$ in a small isobaric cloud, set by the brief
 temperature contrast at the end of cooling (Section~\ref{sec:whyheated}).
+
+Comparison with earlier thresholds:
+\begin{itemize}
+\item \citet{schwarz72} needed seeds of 5--10\% for interstellar gas, but their
+  criterion was stricter: a final cloud-to-intercloud contrast above 100, not
+  $\drho\sim1$.
+\item \citet{burkert00}'s critical $K$ (their eq.~28) applies to growth before the
+  transition to isochoric cooling. For a power law with $\beta=0$ and $A=10^{-2}$ it
+  gives $K_{\rm crit}\approx320$, i.e.\ $x\approx0.015$, smaller than our $x$ range,
+  because it leaves out the growth after cooling.
+\item In stratified, heated haloes the thresholds of \citet{sharma12},
+  \citet{choudhury19} and \citet{mohapatra23} come from buoyancy and mixing limiting
+  the growth, not from the end of cooling. They are therefore not directly
+  comparable.
+\end{itemize}
 
 \begin{figure}[H]
 \centering
@@ -658,6 +728,14 @@ cloud collapses to about one cell per wavelength, so that value is not reliable.
 compressed before they have cooled (by $\approx25\%$) and lie close to, though
 above, the infinite-medium curve. All small clouds then collapse by 100--400 in
 density to slabs a few cells wide, and their late-time values are not reliable.
+
+The isobaric limit is the case \citet{mathews78} applied to cooling flows, where it
+gives growth factors of $10^{4\pm1}$. \citet{balbus89} showed that buoyancy and inflow
+reduce this in a stratified flow. Our clouds show a second, purely hydrodynamic
+limit: a cooling region of finite size falls out of pressure balance with its
+surroundings once $L>\cstc$ of its \emph{current} state, after which it cools at
+nearly constant density. \citet{gronke20} describe the same loss of sonic contact
+in their 3D clouds with initial contrast $\chi_i=1.01$, the setup closest to ours.
 
 \begin{figure}[H]
 \centering
@@ -751,8 +829,14 @@ G-1\approx24\left(\frac{\cstc}{\lambda}\right)^2\quad\text{by }2.5\,\tcool
 \label{eq:isoscaling}
 \end{equation}
 (10--90\% range of the prefactor: 20--29; median 24 with the floor and 28 with
-the UV background). This is the scaling expected for a pressure impulse of order
-$\delta T/T$ acting for $\sim\tcool$ across a wavelength. The growth continues
+the UV background). The scaling and its size follow from the velocity in the
+long-wavelength solution of \citet{burkert00} (Section~\ref{sec:linear}). For
+$\beta=0$ at the end of cooling, $|V|\simeq K^2A$. The density then grows at
+$K^2=4\pi^2/(\gamma x^2)\approx23.7\,x^{-2}$ per initial e-folding time $\tau_c(0)$.
+Our linear theory with the real cooling curve gives $23.1\,x^{-2}$ per $\tau_c(0)$ at
+the end of cooling, for all $x\ge3$. Growth during cooling adds $3.4\,x^{-2}$, and
+the further $1.5\,\tcool\approx0.9\,\tau_c(0)$ adds the rest, giving the coefficient of
+24 at $2.5\,\tcool$. The growth continues
 for a good fraction of the time sound takes to cross $\lambda$ in the cold gas,
 $\lambda/c_{s,\rm cold}\approx17x\,\tcool$ (Figure~\ref{fig:validation}); our
 cloud runs stop at $3\,\tcool$. If $\delta T/T$ reaches order
@@ -966,6 +1050,10 @@ What grows is the entropy (cooling-time) perturbation
   velocity seed compresses the gas directly and matters about as much as a
   density seed.
 \end{itemize}
+This agrees with \citet{mathews78}: perturbations frozen into the gas grow, whereas
+travelling waves are unlikely to. It also agrees with heated media, where condensation
+needs a roughly transonic converging flow \citep{hennebelle99} and small-scale
+velocity forcing can suppress it \citep{sanchez02}.
 
 \begin{table}[H]
 \centering
@@ -1040,9 +1128,103 @@ perturbation becomes a sound wave in the cold gas (Section~\ref{sec:validation})
 \end{itemize}
 
 %======================================================================
-\section{Comments on the poster setup}
-\label{sec:critique}
+\section{Discussion}
+\label{sec:discussion}
 %======================================================================
+
+\subsection{Summary}
+A gas that cools without reheating is unstable to the growth of entropy
+perturbations, as \citet{field65} and \citet{schwarz72} showed. Because the cooling
+ends, so does the growth.
+\begin{itemize}
+\item \textbf{Short wavelengths.} Growth is a fixed number of e-folds per e-fold of
+  temperature, so a gas cooling from $10^6$\,K amplifies a short-wavelength seed by
+  $\sim10^2$ (infinite medium), at most $\sim10^3$ (an ideal small cloud).
+\item \textbf{Long wavelengths.} The density grows mainly after cooling, on the
+  momentum acquired while cooling: $G-1\approx24\,x^{-2}$ by $2.5\,\tcool$, consistent
+  with \citet{burkert00}.
+\item \textbf{Threshold seeds.} Reaching $\drho\sim1$ needs a seed of $\sim1\%$ at
+  $x\lesssim0.3$ and $\sim25\%$ at $x\approx3$. In a heated medium any seed eventually
+  grows large; here only seeds above a threshold do, the point \citet{schwarz72}
+  made for interstellar gas.
+\item \textbf{CGM conditions add little that changes these numbers.} A realistic
+  cooling curve, the UV background, finite cloud size and the type of seed change
+  them by factors of order unity. The exceptions are the late-time evolution, where
+  the UV background damps the cold gas's sound waves, and small clouds, which leave
+  pressure balance early.
+\end{itemize}
+
+\subsection{Physics not included}
+\begin{itemize}
+\item \textbf{Thermal conduction.} Conduction erases isobaric perturbations below
+  $\lambda_\kappa=2\pi\lambda_F/(2-\LT)^{1/2}$, with $\lambda_F$ the Field length
+  \citep{field65,burkert00}. With the full Spitzer conductivity at $10^6$\,K and
+  $n=10^{-2}$\,cm$^{-3}$, $\lambda_\kappa\approx0.6$\,kpc, i.e.\
+  $x_\kappa\approx0.11$. Both $\lambda_F$ and $\cstc$ scale as $1/n$, so $x_\kappa$ is
+  the same at every density. It falls steeply as the gas cools: 0.02 at
+  $5\times10^5$\,K and $10^{-3}$ at $10^5$\,K. Unsuppressed conduction would
+  therefore damp $x\lesssim0.1$ early on, and would matter little once the gas is
+  below a few $\times10^5$\,K. A tangled magnetic field reduces the conductivity
+  \citep{burkert00}.
+\item \textbf{Magnetic fields.} A field across the direction of compression resists
+  it. In interstellar conditions, fields above $\sim1\,\mu$G allow only transient,
+  weakly contrasted structures \citep{hennebelle00}. Magnetic pressure would
+  therefore limit the compression of our small clouds (100--400 in density). A field
+  along the compression does not resist, which favours sheets \citep{schwarz72}.
+\item \textbf{Gravity.} In a stratified halo, buoyancy and inflow limit growth and
+  set the condensation criteria \citep{balbus89,mccourt12,sharma12,choudhury19,mohapatra23}. Our results apply locally, where the cooling time is short
+  compared with the free-fall time.
+\item \textbf{Heating.} Whether gas is more unstable cooling or heated depends on
+  how the heating scales with density (Section~\ref{sec:whyheated};
+  \citealt{field65}). Photoheating is included only through the UV-background tables.
+\item \textbf{Dimensionality.} In 1D cold gas can only form sheets. In 3D a cooling
+  cloud shatters only if its final contrast exceeds $\sim300$
+  \citep{mccourt18,gronke20}. Gas cooling from $10^6$\,K to $10^4$\,K at constant
+  pressure reaches a contrast of $\sim100$, or 50--100 with the UV background's
+  equilibrium temperatures. By that criterion the condensations formed here would
+  not shatter. This is an extrapolation: \citet{gronke20} used a $4\times10^4$\,K
+  floor and heated surroundings.
+\item \textbf{Numerical approximations.}
+  \begin{itemize}
+  \item The approximate collisional-equilibrium curve is 0.1--0.3\,dex off between
+    $2\times10^5$ and $3\times10^6$\,K; the Cloudy runs give the same trends.
+  \item The UV-background runs use $z=0$ only, keep the mean molecular weight of
+    fully ionized gas (so $T$ is slightly misplaced near $10^4$\,K), and ignore
+    self-shielding.
+  \item The behaviour after cooling with a floor depends on how the floor is
+    implemented (here a smooth cutoff, $1-1/\cosh[(T/\Tfl)^{12}]$).
+  \item Late-time values for strongly compressed small clouds are limited by
+    resolution (Section~\ref{sec:resolution}).
+  \item The PLUTO~4.4 port of the setup was not compiled.
+  \end{itemize}
+\end{itemize}
+
+\subsection{Next steps}
+\begin{enumerate}
+\item Reproduce Figure~\ref{fig:validation} with the student's own PLUTO install,
+  to validate the code, cooling table and diagnostic.
+\item Make the central plot amplification against $\lambda/(\cstc)$ for several
+  $L/(\cstc)$ with linear theory and simulations together (Figure~\ref{fig:chi1}),
+  then the minimum-amplitude map (Figure~\ref{fig:minamp}) and the seed comparison
+  (Figure~\ref{fig:pertlinear}).
+\item Follow the small, collapsing clouds with a 1D Lagrangian code, which removes
+  the edge mixing and keeps the resolution, and the nonlinear outcome for
+  $x\lesssim1$ and $A\gtrsim0.01$ in 2D.
+\end{enumerate}
+
+\appendix
+\section{Notes on the student project}
+\label{sec:critique}
+In the student's runs the cloud
+started slightly denser than the background ($\chi\approx1.3$ judging from the
+poster's temperature profiles) and an \texttt{if} statement switched cooling on
+for that gas. $\chi=1$ is the limit with no contrast, which removes $\chi$ as a
+parameter. Earlier drafts also showed $\chi=1.3$, 2 and 5; those results are
+in the git history (commit \texttt{9623051}) and behave in the same way once
+$\lambda$ and $L$ are measured in units of $\cstc$ of the cloud gas.
+
+
+Comments on the poster setup:
 \begin{enumerate}
 \item \textbf{Measure $\lambda$ and $L$ in units of $\cstc$ of the cloud gas.} With
   a small contrast the cloud gas is hot and $\cstc$ is large: for $\chi=1$ at
@@ -1085,33 +1267,6 @@ perturbation becomes a sound wave in the cold gas (Section~\ref{sec:validation})
   run there.
 \end{enumerate}
 
-\section{Suggested next steps}
-\begin{enumerate}
-\item Reproduce Figure~\ref{fig:validation} with the student's own PLUTO install,
-  to validate the code, cooling table and diagnostic.
-\item Make the central plot amplification against $\lambda/(\cstc)$ for several
-  $L/(\cstc)$ with linear theory and simulations together (Figure~\ref{fig:chi1}),
-  then the minimum-amplitude map (Figure~\ref{fig:minamp}) and the seed comparison
-  (Figure~\ref{fig:pertlinear}).
-\item Follow the small, collapsing clouds with a 1D Lagrangian code, which removes
-  the edge mixing and keeps the resolution, and the nonlinear outcome for
-  $x\lesssim1$ and $A\gtrsim0.01$ in 2D.
-\end{enumerate}
-
-\section{Limitations}
-\begin{itemize}
-\item The original cooling curve is an approximation (0.1--0.3\,dex off between
-  $2\times10^5$ and $3\times10^6$\,K); the Cloudy runs give the same trends.
-\item The UV-background runs use $z=0$ only, keep the mean molecular weight of fully
-  ionized gas (so $T$ is slightly misplaced near $10^4$\,K), and ignore self-shielding.
-\item The behaviour after cooling with a floor depends on how the floor is
-  implemented (here a smooth cutoff, $1-1/\cosh[(T/\Tfl)^{12}]$).
-\item The PLUTO~4.4 port of the setup in the repository was not compiled.
-\item Late-time values for strongly compressed small clouds are resolution-limited
-  (Section~\ref{sec:resolution}).
-\end{itemize}
-
-\appendix
 \section{Changes from earlier versions}
 \label{app:corrections}
 \begin{itemize}
