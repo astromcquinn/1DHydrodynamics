@@ -9,6 +9,7 @@ Parameter sweeps of gPLUTO runs (parallel, resumable).
     python sweep.py resolution    # resolution study of a small (isobaric) cloud
     python sweep.py infinite_uvb cloud_uvb amplitude_uvb
                                   # same with a photoionising UV background
+    python sweep.py chi1          # chi = 1: no initial contrast, cooling switched on
     python sweep.py pert_infinite pert_cloud
                                   # density, temperature, sound, velocity and
                                   # metallicity seeds
@@ -200,7 +201,20 @@ def pert_cloud_runs():
     return runs
 
 
-SWEEPS = dict(pert_infinite=pert_infinite_runs, pert_cloud=pert_cloud_runs,
+def chi1_runs():
+    """chi = 1: the 'cloud' is ordinary background gas in which cooling is
+    switched on (no initial density or temperature contrast)."""
+    runs = []
+    for cool, nbg, L, nw in itertools.product(["cie", "pie"], [1e-4, 1e-3, 1e-2],
+                                              [30.0, 100.0], [2.5, 4.5, 8.5]):
+        name = f"chi1_{cool}_n{_fmt(nbg)}_L{_fmt(L)}_nw{_fmt(nw)}"
+        runs.append(dict(name=name, rho_bg=nbg, T_bg=1e6, chi=1.0, L_cloud=L,
+                         lam=L / nw, Z=0.3, amp=0.02, nx=2048, box=3 * L,
+                         tstop_factor=3.0, nout=150, cooling=cool))
+    return runs
+
+
+SWEEPS = dict(chi1=chi1_runs, pert_infinite=pert_infinite_runs, pert_cloud=pert_cloud_runs,
               infinite_uvb=infinite_uvb_runs, cloud_uvb=cloud_uvb_runs,
               amplitude_uvb=amplitude_uvb_runs, resolution=resolution_runs, infinite=infinite_runs, cloud=cloud_runs, amplitude=amplitude_runs,
               scaling=scaling_runs, heating=heating_runs)
