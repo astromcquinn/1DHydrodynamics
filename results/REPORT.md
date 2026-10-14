@@ -218,6 +218,42 @@ L ≈ 0.6 c_s t_cool: it is compressed as it cools, the perturbation goes
 nonlinear while it passes through ~10⁵ K, and the cold gas collapses to a thin
 slab.
 
+### 4.3b Clouds with no initial contrast (χ = 1) (Figs. 22 and 23)
+
+The simplest version of the setup has no density or temperature jump: the
+"cloud" is background gas at 10⁶ K in which cooling is switched on, with the
+seed on top. It depends only on L/(c_s t_cool), λ/(c_s t_cool), Z and the seed,
+and the periodic infinite medium is its L → ∞ limit. 36 runs (Z = 0.3;
+n_bg = 10⁻⁴, 10⁻³, 10⁻²; L = 30 and 100 kpc; 2.5, 4.5 and 8.5 wavelengths per
+cloud; original cooling and UV background) span L/(c_s t_cool) = 0.05–20.
+Resolved clouds lie on the infinite-medium curves. Small clouds (L ≲ c_s t_cool)
+collapse ~100× to slabs a few cells wide, so their late-time values are not
+reliable.
+
+![chi1](figures/fig22_chi1_clouds.png)
+
+At L ≈ 1.5 c_s t_cool with the UV background (Fig. 23, top), the cloud breaks
+into cold dense sheets at the crests of the seed, while the gas between them
+expands, its cooling time lengthens, and it stays at ~6×10⁵ K through 3 t_cool:
+a two-phase structure grown from a 2% seed.
+
+![chi1 profiles](figures/fig23_chi1_profiles.png)
+
+**The cooling switch.** The tracer that switches cooling on is advected with the
+gas, so the cooling region moves inward with the cloud and hot gas flowing in
+behind it does not cool. The only non-Lagrangian part is numerical diffusion at
+the edge (4–8 mixed cells). Once a cloud has collapsed, hot gas flowing onto the
+cold slab is mixed into it numerically and cools. On a collapsing χ = 1 cloud
+(L ≈ 0.5 c_s t_cool), the hot gas that ends up cold is 18% / 25% of the cloud
+mass at 1.6 / 2.4 t_cool with 2048 cells, 16% / 23% with a sharp switch (cool
+only where the tracer exceeds 0.5, `COOL_MASK = 2`), and 10% / 14% with 8192
+cells; the growth while cooling is 71.5 in all three. Across the χ = 1 set the
+leak is 2–3% for large clouds, 7–11% at L ≈ 5 c_s t_cool and up to ~40% for
+clouds that collapse to a few cells (0.3–9% for χ = 2). A density-threshold
+switch would be worse. In 1D the clean solution is a Lagrangian (mass-coordinate)
+code, where the switch is exactly attached to the gas and a collapsing cloud
+keeps its resolution.
+
 ### 4.4 The isochoric regime (Fig. 11)
 
 For λ ≫ c_s t_cool each parcel cools at its own fixed density. The cooling rate

@@ -58,7 +58,8 @@ $T_{\rm bg}/\chi$, so the cloud starts in pressure equilibrium with the
 background. \textbf{$\chi$ is the cloud-to-background density contrast}: $\chi=2$
 means the cloud is twice as dense and half as hot as the background. Most cloud
 runs use $\chi=2$ (cloud at $5\times10^5$\,K); a subset uses $\chi=1.3$ and
-$\chi=5$.
+$\chi=5$, and Section~\ref{sec:chi1} uses $\chi=1$, i.e.\ no initial contrast at
+all: the cloud is background gas in which cooling is switched on.
 
 \paragraph{Which gas cools.}
 Only cloud gas cools; the hot background neither cools nor is heated. A passive
@@ -158,6 +159,8 @@ cloud (UV bkg)             & 62 & 2048  & 90--300         & 683       & 80--270 
 seed amplitude (UV bkg)    & 18 & 2048  & 150             & 683       & 152       & 3.2--3.3 & 4--41\,s \\
 seed types, infinite       & 60 & 512   & 6.6--660        & --        & 512       & 3.3--5.3 & 1--25\,s \\
 seed types, cloud          & 20 & 2048  & 150             & 683       & 152       & 3.2--8.2 & 8--66\,s \\
+$\chi=1$ clouds            & 36 & 2048  & 90--300         & 683       & 80--270   & 3.0      & 1\,s--8\,min \\
+cooling-switch test        & 3  & 2048, 8192 & 90         & 683, 2731 & 307, 1229 & 3.0      & 1--20\,min \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -442,6 +445,83 @@ cools, the perturbation goes nonlinear around $10^5$\,K, and the cold gas
 collapses to a thin slab.}
 \label{fig:profiles}
 \end{figure}
+
+\subsection{Clouds with no initial contrast ($\chi=1$)}
+\label{sec:chi1}
+The simplest version of the setup has no density or temperature jump at all: the
+``cloud'' is background gas at $10^6$\,K in which cooling is switched on, with
+the seed on top. The model then depends only on $L/(\cstc)$, $\lambda/(\cstc)$,
+$Z$ and the seed, and the periodic infinite medium is its $L\to\infty$ limit.
+Thirty-six runs ($Z=0.3$; $n_{\rm bg}=10^{-4},10^{-3},10^{-2}$; $L=30$ and 100\,kpc;
+2.5, 4.5 and 8.5 wavelengths per cloud; original cooling and UV background) span
+$L/(\cstc)=0.05$--20. Resolved clouds lie on the infinite-medium curves while
+cooling and afterwards (Figure~\ref{fig:chi1}). Small clouds ($L\lesssim\cstc$)
+collapse by $\sim100$ in density to slabs a few cells wide, and their late-time
+values are not reliable.
+
+Figure~\ref{fig:chi1prof} shows a striking case. At $L\approx1.5\,\cstc$ with the
+UV background, the cloud breaks into cold dense sheets at the crests of the seed,
+while the gas between them expands, its cooling time lengthens, and it stays at
+$\sim6\times10^5$\,K through $3\,\tcool$: a two-phase structure grown from a 2\%
+seed.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{fig22_chi1_clouds.png}
+\caption{$\chi=1$ clouds: growth of the seeded mode while cooling (circles) and by
+$2.5\,\tcool$ (triangles), coloured by $L/(\cstc)$, with the infinite-medium
+linear theory. All runs have 2048 cells; open symbols mark runs whose seeded
+wavelength spans fewer than 10 cells after the cloud's collapse.}
+\label{fig:chi1}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{fig23_chi1_profiles.png}
+\caption{Profiles of two $\chi=1$ clouds with the UV background. Top
+($L\approx1.5\,\cstc$): the cloud splits into cold sheets separated by hot,
+dilute gas. Bottom ($L\approx4.6\,\cstc$): the interior cools nearly uniformly and
+the seeded mode grows slowly.}
+\label{fig:chi1prof}
+\end{figure}
+
+\paragraph{The cooling switch and numerical mixing.}
+The tracer that switches cooling on is advected with the gas, so the cooling
+region moves inward with the cloud as it contracts and hot gas flowing in behind
+it does not cool. The only non-Lagrangian part is numerical diffusion at the
+cloud edge: cells there contain a mix of cloud and background gas and cool
+partially. The edge stays sharp (4--8 mixed cells), but once a cloud has
+collapsed, hot gas flowing onto the cold slab is mixed into it numerically and
+cools. Table~\ref{tab:mask} tests this on a collapsing $\chi=1$ cloud.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Hot background gas that ends up cold, relative to the initial cloud mass,
+for a $\chi=1$ cloud with $L\approx0.5\,\cstc$ (UV background, $n_{\rm bg}=10^{-3}$).
+``Proportional'': cooling multiplied by the tracer. ``Sharp'': cooling only where
+the tracer exceeds 0.5.}
+\label{tab:mask}
+\begin{tabular}{lccc}
+\toprule
+switch, cells & growth while cooling & at $1.6\,\tcool$ & at $2.4\,\tcool$ \\
+\midrule
+proportional, 2048 & 71.5 & 18\% & 25\% \\
+sharp, 2048        & 71.6 & 16\% & 23\% \\
+proportional, 8192 & 71.4 & 10\% & 14\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The growth while cooling is unaffected. The leakage appears only after collapse;
+a sharp switch barely helps, and it decreases only slowly with resolution. Across
+the $\chi=1$ set it is 2--3\% for large clouds, 7--11\% for $L\approx5\,\cstc$ and
+up to $\sim40\%$ for clouds that collapse to a few cells. (For $\chi=2$ clouds it is
+0.3--9\%.) This is a limitation of any fixed-grid code; a switch based on a
+density threshold would be worse, because compressed hot gas crosses the
+threshold. In 1D the clean solution is a Lagrangian (mass-coordinate) code, in
+which the cooling switch is exactly attached to the gas and a collapsing cloud
+keeps its resolution automatically.
 
 \subsection{The isochoric regime}
 \label{sec:isochoric}

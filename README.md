@@ -37,7 +37,7 @@ Code units: length 1 kpc, velocity 100 km/s (time unit 9.78 Myr), density m_p
 | `L_CLOUD` | cloud length [kpc]. **≤ 0 means an infinite cloud**: the whole periodic box is cloud gas |
 | `EDGE_WIDTH` | tanh smoothing of the tophat edges [kpc] (0 = sharp) |
 | `AMP`, `LAMBDA`, `PHASE` | δρ/ρ = AMP cos(2π(x−x_c)/LAMBDA + PHASE) inside the cloud, at uniform pressure (isobaric seed) |
-| `COOL_MASK` | 1: cooling is multiplied by the passive tracer, so only cloud gas cools ("cooling off outside the cloud") |
+| `COOL_MASK` | 1: cooling is multiplied by the passive tracer, so only cloud gas cools ("cooling off outside the cloud"); 2: sharp version, cool only where the tracer exceeds 0.5 |
 | `HEAT_CGS` | uniform constant volumetric heating [erg cm⁻³ s⁻¹] (e.g. the background's cooling rate) |
 | `T_FLOOR` | cooling (and heating) switched off smoothly below this temperature (use ~50 K with a UV background) |
 | `MAX_COOL_RATE` | max fractional pressure change per step from cooling (time-step control) |
@@ -67,6 +67,8 @@ cd python
 export PLUTO_EXE=/path/to/build/pluto PLUTO_WORK=/tmp/pluto_runs NPROC=4
 python sweep.py infinite cloud amplitude scaling    # resumable
 python sweep.py infinite_uvb cloud_uvb amplitude_uvb # with a UV background
+python sweep.py chi1                                 # chi = 1: no initial contrast
+python sweep.py pert_infinite pert_cloud             # other kinds of seed
 NPROC=4 python linear_maps.py          # original cooling
 NPROC=4 python linear_maps.py uvb      # Cloudy tables, with and without UV background
 python make_figures.py && python make_figures_uvb.py

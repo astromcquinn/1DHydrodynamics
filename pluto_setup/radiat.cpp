@@ -26,9 +26,12 @@
   Common to both:
    - a uniform constant volumetric heating inputParam[HEAT_CGS]
      [erg cm^-3 s^-1] is added;
-   - if inputParam[COOL_MASK] = 1 the tabulated net rate is multiplied by the
-     passive tracer (1 = cloud material, 0 = background), i.e. only the cloud
-     cools/is heated ("cooling turned off outside the cloud");
+   - COOL_MASK = 1: the tabulated net rate is multiplied by the passive tracer
+     (1 = cloud material, 0 = background), i.e. only the cloud cools/is heated
+     ("cooling turned off outside the cloud"); mixed cells at the cloud edge
+     cool partially.
+     COOL_MASK = 2: sharp version, cool only cells with tracer > 0.5, which
+     limits cooling of hot gas numerically mixed into the edge cells;
    - everything is switched off below run_conf.minCoolingTemp with PLUTO's
      smooth cutoff (set T_FLOOR well below 1e4 K when using a UV background).
 */
@@ -138,7 +141,9 @@ void Radiat (double *v, double *rhs, RunConfig& run_conf)
     }
   }
 
-  if (run_conf.inputParam[COOL_MASK] > 0.5) {
+  if (run_conf.inputParam[COOL_MASK] > 1.5) {          /* sharp mask */
+    if (v[TRC] < 0.5) loss = 0.0;
+  } else if (run_conf.inputParam[COOL_MASK] > 0.5) {   /* proportional mask */
     double trc = MIN(MAX(v[TRC], 0.0), 1.0);
     loss *= trc;
   }
