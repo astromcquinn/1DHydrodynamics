@@ -10,6 +10,9 @@ Parameter sweeps of gPLUTO runs (parallel, resumable).
     python sweep.py infinite_uvb cloud_uvb amplitude_uvb
                                   # same with a photoionising UV background
     python sweep.py chi1          # chi = 1: no initial contrast, cooling switched on
+    python sweep.py chi1_large chi1_amplitude chi1_resolution chi1_pert chi1_pert_big chi1_scaling
+                                  # more chi = 1 sets
+    python sweep.py longval       # infinite medium followed to 200 t_cool
     python sweep.py pert_infinite pert_cloud
                                   # density, temperature, sound, velocity and
                                   # metallicity seeds
@@ -214,7 +217,70 @@ def chi1_runs():
     return runs
 
 
-SWEEPS = dict(chi1=chi1_runs, pert_infinite=pert_infinite_runs, pert_cloud=pert_cloud_runs,
+def _chi1(name, nbg, L, nw, cool="cie", A=0.02, **kw):
+    d = dict(name=name, rho_bg=nbg, T_bg=1e6, chi=1.0, L_cloud=L, lam=L / nw,
+             Z=0.3, amp=A, nx=2048, box=3 * L, tstop_factor=3.0, nout=150,
+             cooling=cool)
+    d.update(kw)
+    return d
+
+
+def chi1_large_runs():
+    """chi = 1 clouds much larger than c_s t_cool (long-wavelength regime)."""
+    return [_chi1(f"chi1L_{cool}_n0p01_L{_fmt(L)}_nw{_fmt(nw)}", 1e-2, L, nw, cool)
+            for cool, L, nw in itertools.product(["cie", "pie"], [300.0, 1000.0, 3000.0],
+                                                 [2.5, 4.5, 8.5])]
+
+
+def chi1_amplitude_runs():
+    """Seed-amplitude scan of a chi = 1 cloud (L = 50 kpc), run to 6 t_cool."""
+    return [_chi1(f"chi1A_{cool}_n{_fmt(n)}_A{_fmt(A)}", n, 50.0, 4.5, cool, A=A,
+                  tstop_factor=6.0, nout=300)
+            for cool, n, A in itertools.product(["cie", "pie"], [1e-4, 1e-3, 1e-2],
+                                                [1e-3, 1e-2, 3e-2, 0.1, 0.3])]
+
+
+def chi1_resolution_runs():
+    """The small chi = 1 cloud of the amplitude scan at 2x and 8x resolution."""
+    return [_chi1(f"chi1R_A{_fmt(A)}_nx{nx}", 1e-4, 50.0, 4.5, "cie", A=A, nx=nx,
+                  tstop_factor=3.0)
+            for A, nx in itertools.product([1e-3, 1e-2, 0.1], [4096, 16384])]
+
+
+def chi1_pert_runs():
+    """The five seed types in a chi = 1 cloud (L = 50 kpc)."""
+    return [_chi1(f"chi1P_{cool}_{pt}_n{_fmt(n)}", n, 50.0, 4.5, cool, pert=pt)
+            for cool, pt, n in itertools.product(["ciecl_z", "pie_z"], PERTS, [1e-3, 1e-2])]
+
+
+def chi1_pert_big_runs():
+    """The five seeds at n = 1e-3 in a cloud large enough not to collapse
+    (L = 200 kpc, same wavelength as chi1_pert)."""
+    return [_chi1(f"chi1P_{cool}_{pt}_n0p001_L200", 1e-3, 200.0, 18.0, cool, pert=pt,
+                  nx=6144, box=400.0)
+            for cool, pt in itertools.product(["ciecl_z", "pie_z"], PERTS)]
+
+
+def chi1_scaling_runs():
+    return [_chi1(f"chi1S_n{_fmt(n)}_L{_fmt(L)}", n, L, 4.5)
+            for n, L in [(1e-2, 50.0), (1e-3, 500.0), (1e-4, 5000.0)]]
+
+
+def longval_runs():
+    """Infinite medium followed for 200 t_cool (well past the floor), A = 1e-4."""
+    runs = []
+    for cool, n in [("cie", 1e-2), ("pie", 1e-3)]:
+        for x in [0.1, 1.0, 10.0]:
+            lam = x * cs_tcool_model(n, 1e6, 0.3, cool)
+            runs.append(dict(name=f"lv_{cool}_x{_fmt(x)}", rho_bg=n, T_bg=1e6, chi=1.0,
+                             L_cloud=-1, lam=lam, Z=0.3, amp=1e-4, nx=512,
+                             tstop_factor=200.0, nout=2000, cooling=cool))
+    return runs
+
+
+SWEEPS = dict(chi1=chi1_runs, chi1_large=chi1_large_runs, chi1_amplitude=chi1_amplitude_runs,
+              chi1_resolution=chi1_resolution_runs, chi1_pert=chi1_pert_runs, chi1_pert_big=chi1_pert_big_runs,
+              chi1_scaling=chi1_scaling_runs, longval=longval_runs, pert_infinite=pert_infinite_runs, pert_cloud=pert_cloud_runs,
               infinite_uvb=infinite_uvb_runs, cloud_uvb=cloud_uvb_runs,
               amplitude_uvb=amplitude_uvb_runs, resolution=resolution_runs, infinite=infinite_runs, cloud=cloud_runs, amplitude=amplitude_runs,
               scaling=scaling_runs, heating=heating_runs)

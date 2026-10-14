@@ -1,5 +1,12 @@
 # Perturbation growth in cooling gas: results of the 1D survey
 
+> **Superseded.** The current write-up is the LaTeX document in
+> [`astromcquinn/cooling-perturbations-paper`](https://github.com/astromcquinn/cooling-perturbations-paper)
+> (source also in `results/latex/report.tex`). It shows only χ = 1 clouds, follows the
+> perturbations to 1000 t_cool, and replaces the equal-elapsed-time comparison with a heated
+> medium used below by a per-e-fold-of-cooling comparison. This page is kept as the record of
+> the earlier χ > 1 version.
+
 The question is how small perturbations grow inside gas that is cooling (no
 heating in the cloud). Two configurations are covered: a finite cloud in a hot
 background, as on the poster, and an infinite uniform cooling medium. The

@@ -46,7 +46,9 @@ def one(args):
     LT0 = tab.dlnL_dlnT(T0)
     rate_isobaric = (2 - LT0) / C.GAMMA / ref["tcool0_Myr"]
     rate_isochoric = -LT0 / ref["tcool0_Myr"]
+    dT = np.abs(o["dT"])
     return dict(Z=Z, T0=T0, x=x, bg=bg, tf=tf, tcool0=ref["tcool0_Myr"],
+                dT_max_cool=dT[cool].max(), dT_max_3tf=dT.max(),
                 G_floor=s[i_f], G_max_cool=s[cool].max(), G_2tf=s[: i_2 + 1].max(),
                 G_3tf=s.max(), T_at_max=o["T"][cool][np.argmax(s[cool])],
                 das_isobaric=np.exp(rate_isobaric * tf),

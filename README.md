@@ -5,7 +5,7 @@ Tools for studying how a small density perturbation evolves inside gas that is
 background or in an infinite uniform medium. Compare Das, Choudhury & Sharma (2021,
 MNRAS), where heating balances cooling on average.
 
-Results and figures are in [`results/REPORT.md`](results/REPORT.md).
+The write-up is `results/latex/report.tex` (also in [`astromcquinn/cooling-perturbations-paper`](https://github.com/astromcquinn/cooling-perturbations-paper)); `results/REPORT.md` is an earlier version that also covers clouds denser than the background.
 
 ## Layout
 
@@ -67,11 +67,12 @@ cd python
 export PLUTO_EXE=/path/to/build/pluto PLUTO_WORK=/tmp/pluto_runs NPROC=4
 python sweep.py infinite cloud amplitude scaling    # resumable
 python sweep.py infinite_uvb cloud_uvb amplitude_uvb # with a UV background
-python sweep.py chi1                                 # chi = 1: no initial contrast
+python sweep.py chi1 chi1_large chi1_amplitude chi1_resolution chi1_pert chi1_pert_big chi1_scaling  # chi = 1
+python sweep.py longval                              # infinite medium to 200 t_cool
 python sweep.py pert_infinite pert_cloud             # other kinds of seed
 NPROC=4 python linear_maps.py          # original cooling
 NPROC=4 python linear_maps.py uvb      # Cloudy tables, with and without UV background
-python make_figures.py && python make_figures_uvb.py
+python make_figures.py && python make_figures_uvb.py && python make_figures_paper.py
 ```
 
 A single cloud run (2048 cells) takes 1 s to a few minutes on one core. The cost

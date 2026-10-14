@@ -92,8 +92,10 @@ def fig_linear_survey():
     save(fig, "fig19_pert_linear_survey.png")
 
 
-def fig_clouds():
-    R = runs("pert_cloud")
+def fig_clouds(sweep="pert_cloud", out="fig20_pert_clouds.png", keep=None):
+    R = [d for sw in ([sweep] if isinstance(sweep, str) else sweep) for d in runs(sw)]
+    if keep is not None:
+        R = [d for d in R if keep(d)]
     if not R:
         return
     fig, ax = plt.subplots(1, 2, figsize=(11, 4.0), sharey=True)
@@ -119,14 +121,15 @@ def fig_clouds():
         a.set_xticks(range(len(PERTS)))
         a.set_xticklabels([PLAB[p].split(" (")[0] for p in PERTS], fontsize=8.5)
         a.axhline(1, color=INK2, lw=0.6, ls="--")
-        a.set_title(f"Cloud, n$_{{bg}}$ = {nbg:g}, L = 50 kpc, χ = 2 (λ ≈ {x:.1f} c$_s$t$_{{cool}}$, UV)")
+        a.set_title(f"Cloud, n$_{{bg}}$ = {nbg:g}, L = 50 kpc, χ = {p['chi']:g}: "
+                    f"L ≈ {Lx:.2g}, λ ≈ {x:.2g} c$_s$t$_{{cool}}$")
     ax[0].set_ylabel(r"$|\delta\rho/\rho|$ / A of the seeded mode")
     from matplotlib.lines import Line2D
     h = [Line2D([], [], color=INK2, marker="o", mfc="none", ls="none", label="max while cooling, CIE + floor"),
          Line2D([], [], color=INK2, marker="o", ls="none", label="max while cooling, UV background"),
          Line2D([], [], color=INK2, marker="^", ls="none", label="max by 2.5 t$_{cool}$")]
     ax[1].legend(handles=h, fontsize=7.5, loc="upper right")
-    save(fig, "fig20_pert_clouds.png")
+    save(fig, out)
 
 
 def fig_nonlinear():

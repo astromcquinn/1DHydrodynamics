@@ -26,19 +26,22 @@
 
 \begin{abstract}
 We study how small perturbations grow in gas that is \emph{cooling}, i.e.\ with no
-heating inside the cloud, in contrast to \citet{das21}, where heating balances
-cooling on average. We use two configurations: a finite ``tophat'' cloud in a
-hot background (as in the student project), and an infinite uniform cooling
-medium. About 420 one-dimensional gPLUTO simulations are compared with a linear
-theory integrated along the cooling background, for three cooling models
-(an approximate collisional-equilibrium curve with a $10^4$\,K floor, Cloudy
-collisional equilibrium with the same floor, and Cloudy in the
-\citealt{hm12} UV background) and five kinds of seed perturbation (density,
-temperature, sound wave, velocity, metallicity). The growth is controlled
-mainly by $x=\lambda/(\cstc)$ of the initial cloud gas. It is finite, set by
-the shape of the cooling curve rather than by elapsed time, and much of it
-happens after the gas has cooled. What grows is the entropy (cooling-time) part
-of a perturbation.
+heating, in contrast to \citet{das21}, where heating balances cooling on average.
+The setup has no initial density contrast: a uniform $10^6$\,K medium in which
+radiative cooling is switched on in a region of length $L$ (a ``cloud''), or
+everywhere (the infinite medium, $L\to\infty$). About 340 one-dimensional gPLUTO
+simulations are compared with a linear theory integrated along the cooling
+background, for three cooling models (an approximate collisional-equilibrium
+curve with a $10^4$\,K floor, Cloudy collisional equilibrium with the same floor,
+and Cloudy in the \citealt{hm12} UV background) and five kinds of seed
+perturbation (density, temperature, sound wave, velocity, metallicity). The
+growth is controlled by $x=\lambda/(\cstc)$ and $L/(\cstc)$. Per e-fold of
+cooling, a perturbation grows by as many e-folds as a perturbation in a heated
+medium grows per cooling time; but a cooling gas has only $\approx4$ e-folds of
+temperature to traverse, so the amplification is finite ($\lesssim10^2$ in an
+infinite medium). Much of it happens after the gas has cooled. After that the
+perturbation becomes a sound wave in the cold gas, which in the UV background
+damps away.
 \end{abstract}
 
 \tableofcontents
@@ -48,128 +51,135 @@ of a perturbation.
 \label{sec:setup}
 %======================================================================
 
-\subsection{The two configurations}
+\subsection{Configurations}
 
-\paragraph{Cloud in a hot background.}
-The domain is filled with hot gas of density $\rho_{\rm bg}$ and temperature
-$T_{\rm bg}=10^6$\,K. A ``tophat'' cloud of length $L$ sits in the middle.
-Inside it the density is $\chi\rho_{\rm bg}$ and the temperature
-$T_{\rm bg}/\chi$, so the cloud starts in pressure equilibrium with the
-background. \textbf{$\chi$ is the cloud-to-background density contrast}: $\chi=2$
-means the cloud is twice as dense and half as hot as the background. Most cloud
-runs use $\chi=2$ (cloud at $5\times10^5$\,K); a subset uses $\chi=1.3$ and
-$\chi=5$, and Section~\ref{sec:chi1} uses $\chi=1$, i.e.\ no initial contrast at
-all: the cloud is background gas in which cooling is switched on.
-
-\paragraph{Which gas cools.}
-Only cloud gas cools; the hot background neither cools nor is heated. A passive
-tracer is set to 1 in the cloud and 0 outside, and the cooling rate in every
-cell is multiplied by the tracer. This is the same idea as the student's setup,
-where the cloud was initialized slightly denser than the background and an
-\texttt{if} statement switched cooling on for that gas. The two differ in
-detail:
-\begin{itemize}
-\item the tracer follows the cloud \emph{material}: gas that started in the cloud
-  keeps cooling even if it later becomes underdense, and hot gas swept up at the
-  cloud edge never cools;
-\item a density threshold follows the \emph{density}: compressed hot gas at the
-  edges would start cooling, and parts of the cloud that become underdense would
-  stop.
-\end{itemize}
-While the cloud cools at nearly constant density the two are equivalent. They
-differ at the edges and, for large seeds, in the underdense parts of the
-perturbation. Judging from the poster's temperature profiles, the student's
-clouds had $\chi\approx1.3$; our $\chi=1.3$ runs are the closest analogue
-(Section~\ref{sec:critique}).
+\paragraph{Cloud ($\chi=1$).}
+The domain is filled with uniform gas of density $\rho_0$ ($n=\rho_0/m_p$) and
+temperature $T_0=10^6$\,K. In a central region of length $L$, the ``cloud'',
+radiative cooling is switched on; outside it the gas neither cools nor is heated.
+There is \emph{no initial density or temperature contrast}: in the notation of
+the earlier drafts, $\chi$ (the initial cloud-to-background density ratio) is 1.
+The seed perturbation is applied only inside the cloud. As the cloud cools it
+loses pressure support, and the surrounding hot gas flows in and compresses it.
+The model depends only on $L/(\cstc)$, $\lambda/(\cstc)$, the metallicity $Z$,
+the seed, and (with a UV background) weakly on $n$.
 
 \paragraph{Infinite medium.}
-A periodic box exactly one wavelength long, filled with gas at the cloud's
-density and temperature. It has no edges and is the cleanest place to measure
-growth.
+A periodic box exactly one wavelength long, all of it cooling. This is the
+$L\to\infty$ limit of the cloud. It has no edges and is the cleanest place to
+measure growth.
+
+\paragraph{Relation to the student's setup.} In the student's runs the cloud
+started slightly denser than the background ($\chi\approx1.3$ judging from the
+poster's temperature profiles) and an \texttt{if} statement switched cooling on
+for that gas. $\chi=1$ is the limit with no contrast, which removes $\chi$ as a
+parameter. Earlier drafts also showed $\chi=1.3$, 2 and 5; those results are
+in the git history (commit \texttt{9623051}) and behave in the same way once
+$\lambda$ and $L$ are measured in units of $\cstc$ of the cloud gas.
+
+\subsection{Which gas cools}
+\label{sec:switch}
+A passive tracer is set to 1 in the cloud and 0 outside, and the cooling rate in
+every cell is multiplied by the tracer. The tracer is advected with the gas, so
+the switch follows the cloud \emph{material}: the cooling region moves inward
+with the cloud as it is compressed, hot gas that flows in behind it does not
+cool, and cloud gas keeps cooling even where it becomes underdense. (A switch
+based on a density threshold would instead let compressed hot gas start
+cooling.) The only departure from an exactly Lagrangian switch is numerical
+mixing at the cloud edge; it is quantified in Section~\ref{sec:mixing}.
 
 \subsection{Cooling models}
 \begin{enumerate}
-\item \emph{Original (approximate CIE):} $\Lambda(T,Z)$ = primordial
+\item \emph{CIE + floor (original):} $\Lambda(T,Z)$ = primordial
   collisional-equilibrium cooling from the \citet{katz96} rates plus $Z$ times a
   smooth approximation to the \citet{sd93} solar metal curve, with a floor at
   $\Tfl=10^4$\,K. Compared with Cloudy it is 0.1--0.3\,dex too high between
   $2\times10^5$ and $3\times10^6$\,K.
-\item \emph{Cloudy CIE:} the Cloudy collisional-equilibrium tables distributed
-  with Grackle \citep{smith17}, with the same floor.
+\item \emph{Cloudy CIE + floor:} the Cloudy collisional-equilibrium tables
+  distributed with Grackle \citep{smith17}, with the same floor.
 \item \emph{UV background:} the Cloudy photoionization-equilibrium tables for the
   \citet{hm12} background at $z=0$, including photoheating and with no floor. Gas
   settles at $\Teq=1.9\times10^4$, $1.3\times10^4$ and $1.0\times10^4$\,K at
-  $n=\rho/m_p=10^{-4}$, $10^{-3}$ and $10^{-2}$\,cm$^{-3}$.
+  $n=10^{-4}$, $10^{-3}$ and $10^{-2}$\,cm$^{-3}$.
 \end{enumerate}
-Figure~\ref{fig:cooling} shows the original curves; Figure~\ref{fig:coolmodels}
-compares the three models.
+Figures~\ref{fig:cooling} and~\ref{fig:coolmodels} show the curves.
 
 \subsection{Seeds and diagnostics}
 Unless stated otherwise the seed is $\drho = A\cos(2\pi x/\lambda)$ at uniform
-pressure (the denser gas is cooler). Section~\ref{sec:seeds} adds four other
-seeds. Perturbations are measured by a least-squares projection onto
-$\cos(k_m m)$ and $\sin(k_m m)$ in the \emph{Lagrangian (mass) coordinate} $m$,
-using only the inner 60\% of the cloud mass so that the edges are excluded. The
-same projection gives $\delta T/T$, $\delta p/p$, the entropy
-$\delta\ln K$ with $K=p/\rho^\gamma$, the velocity and the metallicity. The
-growth factor $G$ is the amplitude of the seeded mode divided by its initial
-amplitude.
+pressure (the denser gas is cooler), with $A=0.02$ in the cloud runs.
+Section~\ref{sec:seeds} adds four other seeds. Perturbations are measured by a
+least-squares projection onto $\cos(k_m m)$ and $\sin(k_m m)$ in the
+\emph{Lagrangian (mass) coordinate} $m$, using only the inner 60\% of the cloud
+mass so that the edges are excluded. The same projection gives $\delta T/T$,
+$\delta p/p$, the entropy $\delta\ln K$ with $K=p/\rho^\gamma$, the velocity and
+the metallicity. The growth factor $G$ is the amplitude of the seeded mode
+divided by its initial amplitude.
 
 \subsection{Time normalization}
 \label{sec:tnorm}
 All times are in units of $\tcool$, defined as \textbf{the time for the
-unperturbed cloud gas to cool (at constant density) to $1.5\,\Tfl$ or
-$1.5\,\Teq$}. ``Growth while cooling'' means the maximum of $|G|$ for
-$t\le\tcool$; ``growth by $2.5\,\tcool$'' includes the post-cooling phase. For
-$n=10^{-2}$\,cm$^{-3}$, $T=10^6$\,K and $Z=0.3$ the gas reaches $1.5\times10^4$\,K
-after 20\,Myr; the e-folding cooling time at the start,
-$p/[(\gamma-1)n_en_H\Lambda]$, is 34\,Myr. An earlier version used the time to
-reach $1.05\,\Tfl$, which can be 1.2--3 times later because cooling just above
-the floor is slow (Appendix~\ref{app:corrections}).
+unperturbed gas to cool at constant density to $1.5\,\Tfl$ or $1.5\,\Teq$}.
+``Growth while cooling'' means the maximum of $|G|$ for $t\le\tcool$; ``growth
+by $2.5\,\tcool$'' includes the post-cooling phase. For $n=10^{-2}$\,cm$^{-3}$,
+$T=10^6$\,K and $Z=0.3$ the gas reaches $1.5\times10^4$\,K after 20\,Myr. The
+length unit $\cstc$, used for $x=\lambda/(\cstc)$ and $L/(\cstc)$, is instead
+built from the \emph{initial} e-folding time $p/[(\gamma-1)n_en_H\Lambda]$ (34\,Myr
+in this example) and the initial sound speed (150\,km\,s$^{-1}$), giving
+$\cstc=5.1$\,kpc at $n=10^{-2}$\,cm$^{-3}$ and $\propto1/n$ for collisional cooling.
 
 \subsection{Numerical setup and run inventory}
+\label{sec:runs}
 gPLUTO \citep{mignone07}, 1D Cartesian, HLLC Riemann solver, piecewise-linear
 reconstruction, RK2 time stepping, CFL number 0.4, $\gamma=5/3$, tabulated
 cooling integrated as an operator-split source term with the time step limited
 to a 5\% pressure change per step. Code units are 1\,kpc, 100\,km\,s$^{-1}$
-(time unit 9.78\,Myr) and $m_p$. Table~\ref{tab:runs} lists every set of runs.
-All cloud runs use 2048 uniform cells over a box three times the cloud length
-(683 cells across the cloud); all infinite-medium runs use 512 cells per
-wavelength. Each run takes from under a second to a few minutes on one CPU core,
-except the 16384-cell resolution runs (20\,min).
+(time unit 9.78\,Myr) and $m_p$. Cloud runs use a uniform grid over a box three
+times the cloud length with outflow boundaries; infinite-medium runs use 512
+cells over one wavelength with periodic boundaries. Table~\ref{tab:runs} lists
+every set; each figure caption repeats the resolution of the runs it shows.
 
 \begin{table}[H]
 \centering
 \small
-\caption{Simulation sets. $N$: number of runs. Cells per $\lambda$ is the initial
-resolution of the seeded wavelength. Duration is in units of $\tcool$
-(Section~\ref{sec:tnorm}). Wall-clock time is per run on one core.}
+\caption{Simulation sets. $N$: number of runs. ``Cells/cloud'' and ``cells/$\lambda$''
+are initial values; a cloud with $L\lesssim\cstc$ is later compressed by
+$\sim100$--400, which reduces both by the same factor. Duration is in units of
+$\tcool$. Wall-clock time is per run on one CPU core.}
 \label{tab:runs}
 \begin{tabular}{lrrrrrrr}
 \toprule
-set & $N$ & cells & box [kpc] & cells/cloud & cells/$\lambda$ & duration [$\tcool$] & wall clock \\
+set & $N$ & cells & box [kpc] & cells/cloud & cells/$\lambda$ & duration & wall clock \\
 \midrule
-infinite (orig.\ CIE)      & 63 & 512   & 0.05--390       & --        & 512       & 3.6--3.7 & 0.2--10\,s \\
-cloud (orig.\ CIE)         & 62 & 2048  & 90--300         & 683       & 80--270   & 3.3--8.9 & 1--42\,s \\
-seed amplitude (orig.)     & 18 & 2048  & 150             & 683       & 152       & 4.4      & 2--14\,s \\
-density scaling            & 3  & 2048  & 150--15000      & 683       & 152       & 4.4      & 2\,s \\
-resolution                 & 6  & 4096, 16384 & 100       & 2048, 8192 & 455, 1820 & 4.4     & 1--20\,min \\
-infinite (Cloudy)          & 91 & 512   & 0.06--48000     & --        & 512       & 3.1--6.8 & 0.4--32\,s \\
-cloud (UV bkg)             & 62 & 2048  & 90--300         & 683       & 80--270   & 2.6--5.5 & 1--104\,s \\
-seed amplitude (UV bkg)    & 18 & 2048  & 150             & 683       & 152       & 3.2--3.3 & 4--41\,s \\
-seed types, infinite       & 60 & 512   & 6.6--660        & --        & 512       & 3.3--5.3 & 1--25\,s \\
-seed types, cloud          & 20 & 2048  & 150             & 683       & 152       & 3.2--8.2 & 8--66\,s \\
-$\chi=1$ clouds            & 36 & 2048  & 90--300         & 683       & 80--270   & 3.0      & 1\,s--8\,min \\
+infinite, CIE + floor      & 63 & 512   & 0.05--390       & --        & 512       & 3.6--3.7 & 0.2--10\,s \\
+infinite, long             & 6  & 512   & 0.5--660        & --        & 512       & 200      & 4\,s--3\,min \\
+infinite, Cloudy           & 91 & 512   & 0.06--48000     & --        & 512       & 3.1--6.8 & 0.4--32\,s \\
+infinite, seed types       & 60 & 512   & 6.6--660        & --        & 512       & 3.3--5.3 & 1--25\,s \\
+clouds                     & 36 & 2048  & 90--300         & 683       & 80--270   & 3.0      & 1\,s--8\,min \\
+large clouds               & 18 & 2048  & 900--9000       & 683       & 80--270   & 3.0      & 2--8\,s \\
+density scaling            & 3  & 2048  & 150--15000      & 683       & 152       & 3.0      & 4\,s \\
+seed amplitude             & 30 & 2048  & 150             & 683       & 152       & 6.0      & AMPWALL \\
+resolution                 & 6  & 4096, 16384 & 150       & 1365, 5461 & 303, 1214 & 3.0     & RESWALL \\
+seed types, $n=10^{-2}$    & 10 & 2048  & 150             & 683       & 152       & 3.0      & 15--19\,s \\
+seed types, $n=10^{-3}$    & 10 & 6144  & 400             & 3072      & 171       & 3.0      & PERTWALL \\
 cooling-switch test        & 3  & 2048, 8192 & 90         & 683, 2731 & 307, 1229 & 3.0      & 1--20\,min \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\noindent Cloud runs use outflow boundaries; infinite-medium runs are periodic.
-The parameters of the cloud sets are $Z=0.1,0.3,1$; $n_{\rm bg}=10^{-4},10^{-3},10^{-2}$\,cm$^{-3}$;
-$L=30$ and 100\,kpc; 2.5, 4.5 and 8.5 wavelengths per cloud; $\chi=2$ (plus
-$\chi=1.3$ and 5 at $L=50$\,kpc, 4.5 wavelengths). Together they span
-$L/(\cstc)$ from 0.2 to 2000.
+\noindent All runs start at $T_0=10^6$\,K. Cloud runs (all $\chi=1$, $Z=0.3$):
+\begin{itemize}
+\item \emph{clouds}: $n=10^{-4},10^{-3},10^{-2}$\,cm$^{-3}$; $L=30$ and 100\,kpc;
+  $L/\lambda=2.5$, 4.5, 8.5; CIE + floor and UV background;
+\item \emph{large clouds}: $n=10^{-2}$, $L=300$, 1000, 3000\,kpc, otherwise the same.
+  Together the two sets span $L/(\cstc)=0.05$--600 and $x=0.005$--230;
+\item \emph{density scaling}: $(n,L)=(10^{-2},50)$, $(10^{-3},500)$, $(10^{-4},5000)$;
+\item \emph{seed amplitude}: $L=50$\,kpc, $L/\lambda=4.5$, $A=10^{-3}$--0.3, three
+  densities, both cooling models;
+\item \emph{resolution}: the $n=10^{-4}$ cloud of the amplitude set (CIE + floor) at
+  2 and 8 times the resolution;
+\item \emph{seed types}: five seeds, Cloudy CIE + floor and UV background,
+  $(n,L,L/\lambda)=(10^{-2},50,4.5)$ and $(10^{-3},200,18)$.
+\end{itemize}
 
 \begin{figure}[H]
 \centering
@@ -202,17 +212,46 @@ $L_T=\partial L/\partial\ln T$, $L_Z=\partial L/\partial\ln Z$. Then
   - \frac{\gamma-1}{p_0}L_Z\zeta, \label{eq:q}
 \end{align}
 where $\zeta=\delta Z/Z$ is a metallicity perturbation, constant on each fluid
-element. The \emph{infinite medium} has $D=0$ and cools at constant density. A
-\emph{small cloud} ($L\ll\cstc$) held at the constant pressure of the hot gas has
-$D=r/\gamma$, so it is compressed as it cools and $k$ grows with $\rho_0$. For
-collisional cooling $L_\rho=2L$ and $L_T=\LT L$. The background equations are
-integrated together with
-Eqs.~(\ref{eq:s})--(\ref{eq:q}), using the same cooling tables and interpolation
-as gPLUTO.
+element. For collisional cooling $L_\rho=2L$ and $L_T=\LT L$. The perturbation
+equations are integrated together with the background equations,
+\begin{equation}
+\frac{d\ln\rho_0}{dt}=D,\qquad \frac{dp_0}{dt}=\gamma p_0D-(\gamma-1)L,
+\label{eq:bg}
+\end{equation}
+using the same cooling tables and interpolation as gPLUTO. The equations are
+linear in the \emph{perturbation} only; the background itself is followed
+exactly through its whole (very nonlinear) cooling history, from $10^6$\,K to
+the floor.
+
+\subsection{The two backgrounds}
+\label{sec:backgrounds}
+The background must be specified by choosing $D(t)$:
+\begin{itemize}
+\item \textbf{Isochoric background ($D=0$)}: the density stays fixed and the
+  pressure falls as the gas cools. This is the infinite medium, and the interior of
+  a cloud much larger than $\cstc$, which has no time to be compressed.
+\item \textbf{Isobaric background}: we impose $dp_0/dt=0$ in Eq.~(\ref{eq:bg}),
+  i.e.\ $D=(\gamma-1)L/(\gamma p_0)=r/\gamma$. The density rises as the gas cools,
+  $\rho_0T_0=$ const. The mode is fixed in the mass coordinate, so its physical
+  wavelength shrinks as $\lambda\propto1/\rho_0$ ($k=k_m\rho_0$ grows). This
+  describes a cloud much smaller than $\cstc$: sound crosses it quickly, so it stays
+  at the pressure of the surrounding non-cooling gas, which keeps its initial
+  pressure because it does not cool. The background is uniform; the cloud edges
+  and the inflow of hot gas are not modelled. Nothing is imposed in the
+  simulations: a $\chi=1$ cloud with $L\ll\cstc$ is compressed in this way on its
+  own.
+\end{itemize}
+The isobaric limit requires $\lambda<L\ll\cstc$ \emph{throughout} the cooling,
+which is restrictive. Along an isobaric track $L\propto1/\rho_0\propto T$,
+$c_s\propto T^{1/2}$ and $\tcool\propto T^2/\Lambda$, so
+$L/(\cstc)\propto\Lambda(T)/T^{3/2}$, which grows by a factor 130 between
+$10^6$ and $10^5$\,K and up to $10^3$ near $2\times10^4$\,K. A cloud with
+$L/(\cstc)_0=0.1$ therefore stays isobaric only down to $\sim4\times10^5$\,K, and
+then cools more nearly isochorically. Real small clouds lie between the two
+limits (Section~\ref{sec:clouds}).
 
 \subsection{Limits}
-\paragraph{Short wavelength (isobaric).} Pressure equalizes quickly ($q\to0$)
-and
+\paragraph{Short wavelength.} Pressure equalizes quickly ($q\to0$) and
 \begin{equation}
 \frac{ds}{dt}=\frac{2-\LT}{\gamma\,\tcool(t)}\,s,\qquad
 \tcool(t)\equiv\frac{p_0}{(\gamma-1)L}.
@@ -224,13 +263,12 @@ perturbation is a \emph{time shift} of the cooling history (the denser parcel
 reaches each temperature a little earlier), with
 \begin{equation}
 \frac{s(T)}{s_0}=\left[\left(\frac{T_0}{T}\right)^2\frac{\Lambda(T)}{\Lambda(T_0)}\right]^{\beta},
-\qquad \beta=\begin{cases}1 & \text{small cloud (isobaric background)},\\
-1/\gamma & \text{infinite medium (isochoric background)}.\end{cases}
+\qquad \beta=\begin{cases}1 & \text{isobaric background (small cloud)},\\
+1/\gamma & \text{isochoric background (infinite medium)}.\end{cases}
 \label{eq:timeshift}
 \end{equation}
 
-\paragraph{Long wavelength (isochoric).} The density is frozen ($s$ constant)
-while
+\paragraph{Long wavelength.} The density is frozen ($s$ constant) while
 \begin{equation}
 \frac{dq}{dt}=\frac{(1-\LT)\,q-(2-\LT)\,s}{\tcool}.
 \label{eq:isochoric}
@@ -239,99 +277,145 @@ The temperature and pressure perturbation is driven by the frozen density
 perturbation, and grows on its own wherever $\LT<1$. In the heated medium of
 \citet{das21} the corresponding condition is $\LT<0$.
 
-\subsection{Why the amplification is much larger than in a heated medium}
+\subsection{Comparison with a heated medium}
 \label{sec:whyheated}
 In the heated medium of \citet{das21} the background is steady: heating balances
-cooling, $\tcool$ stays at its initial value $t_{\rm cool,0}$, and a short-wavelength
-mode grows exponentially at the \emph{constant} rate
-$\sigma_0=(2-\LT)/(\gamma t_{\rm cool,0})$, i.e.\ $G=\exp(\sigma_0 t)$.
+cooling, $\tcool$ stays at its initial value $t_{\rm cool,0}$, and a linear
+short-wavelength mode grows exponentially at the constant rate
+$\sigma_0=(2-\LT)/(\gamma t_{\rm cool,0})$, i.e.\ $G=\exp(\sigma_0 t)$, for as long
+as it stays linear.
 
-In cooling gas the instantaneous rate is given by the same formula,
-Eq.~(\ref{eq:isobaric}), but $\tcool$ is evaluated at the \emph{current}
-temperature, and it collapses as the gas cools. At constant density
-$\tcool\propto T/\Lambda(T)$; at constant pressure $\propto T^2/\Lambda(T)$.
-Table~\ref{tab:sigma} follows an infinite medium with $n=10^{-2}$\,cm$^{-3}$,
-$Z=0.3$, starting at $10^6$\,K.
+A cooling gas is different in kind, not just in rate. The perturbation is still
+linear, but the background is not steady: its temperature falls by a factor of
+$\sim70$, a change that is itself far from small. The instantaneous rate is the
+same formula, Eq.~(\ref{eq:isobaric}), evaluated at the \emph{current} state, and
+$\tcool$ collapses as the gas cools (Table~\ref{tab:sigma}). Elapsed time is
+therefore not a useful clock. The natural clock is the temperature. On an
+isochoric background $d\ln T/dt=-1/\tcool$, so Eq.~(\ref{eq:isobaric}) becomes
+\begin{equation}
+\frac{d\ln s}{d\ln(1/T)}=\frac{2-\LT}{\gamma}
+\qquad\Bigl(\text{isobaric background: }2-\LT\Bigr),
+\label{eq:perefold}
+\end{equation}
+which integrates to Eq.~(\ref{eq:timeshift}). \textbf{Per e-fold of cooling, the
+perturbation gains $(2-\LT)/\gamma$ e-folds: exactly the number of e-folds a
+perturbation in the heated medium gains per cooling time.} Locally the two media
+are equally unstable. What differs is the budget: the heated medium can keep
+growing for as many cooling times as it lasts, whereas the cooling gas has only
+$\ln(10^6/1.5\times10^4)\approx4.2$ e-folds of temperature to traverse, after which
+it stops cooling. That is why the amplification of cooling gas is finite and is
+set by the shape of $\Lambda(T)$, not by time.
 
 \begin{table}[H]
 \centering
 \small
 \caption{Cooling time and instantaneous isobaric growth rate along the cooling
-history of an infinite medium ($n=10^{-2}$\,cm$^{-3}$, $Z=0.3$, original
-cooling). The last column is the rate in units of the initial rate
-$\sigma_0=0.042$\,Myr$^{-1}$.}
+history of an infinite medium ($n=10^{-2}$\,cm$^{-3}$, $Z=0.3$, CIE + floor).
+$\sigma_0=0.042$\,Myr$^{-1}$ is the rate at the initial state. The column
+$(2-\LT)/\gamma$ is the growth in e-folds per e-fold of temperature,
+Eq.~(\ref{eq:perefold}).}
 \label{tab:sigma}
-\begin{tabular}{rrrrr}
+\begin{tabular}{rrrrrr}
 \toprule
-$T$ [K] & $\tcool$ [Myr] & $\LT$ & $\sigma=(2-\LT)/(\gamma\tcool)$ [Myr$^{-1}$] & $\sigma/\sigma_0$ \\
+$T$ [K] & $\tcool$ [Myr] & $\LT$ & $(2-\LT)/\gamma$ & $\sigma=(2-\LT)/(\gamma\tcool)$ [Myr$^{-1}$] & $\sigma/\sigma_0$ \\
 \midrule
-$10^6$            & 33.5  & $-0.32$ & 0.042 & 1 \\
-$5\times10^5$     & 9.9   & $-1.40$ & 0.21  & 5 \\
-$3\times10^5$     & 3.1   & $-1.03$ & 0.58  & 14 \\
-$10^5$            & 0.79  & $-0.06$ & 1.6   & 38 \\
-$3\times10^4$     & 0.63  & $-0.99$ & 2.9   & 69 \\
-$2\times10^4$     & 0.25  & $-0.59$ & 6.3   & 150 \\
+$10^6$            & 33.5  & $-0.32$ & 1.39 & 0.042 & 1 \\
+$5\times10^5$     & 9.9   & $-1.40$ & 2.04 & 0.21  & 5 \\
+$3\times10^5$     & 3.1   & $-1.03$ & 1.82 & 0.58  & 14 \\
+$10^5$            & 0.79  & $-0.06$ & 1.24 & 1.6   & 38 \\
+$3\times10^4$     & 0.63  & $-0.99$ & 1.79 & 2.9   & 69 \\
+$2\times10^4$     & 0.25  & $-0.59$ & 1.55 & 6.3   & 150 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The number of e-folds is $N=\int\sigma\,dt$. Over the 20\,Myr the gas takes to
-cool from $10^6$ to $1.5\times10^4$\,K:
-\begin{itemize}
-\item the heated medium accumulates $\sigma_0\times20\,{\rm Myr}=0.84$ e-folds,
-  a factor 2.3;
-\item the cooling gas accumulates $N=4.9$ e-folds, a factor $\approx130$. Of
-  these, 2.1 come from the first 17\,Myr ($10^6$--$3\times10^5$\,K), and 2.7 from
-  the last 3\,Myr ($3\times10^5$--$2\times10^4$\,K). This equals the time-shift
-  result, Eq.~(\ref{eq:timeshift}) with $\beta=1/\gamma$, evaluated at
-  $1.5\times10^4$\,K.
-\end{itemize}
-So the cooling gas amplifies far more \emph{in the same elapsed time} because it
-sweeps through temperatures where the cooling time, and hence the growth time,
-is up to a hundred times shorter. Two caveats keep the comparison fair. First,
-the heated medium is not capped: it keeps growing and reaches a factor of 100
-after $\approx110$\,Myr ($3.3\,t_{\rm cool,0}$), whereas the cooling gas cannot
-amplify beyond what Eq.~(\ref{eq:timeshift}) allows, about $10^2$ in an infinite
-medium and $\sim3\times10^3$ in a small cloud from $10^6$\,K. Second, this is the
-short-wavelength limit; at $\lambda\gtrsim\cstc$ both cases grow much less.
+For this example the cooling gas gains $N=4.9$ e-folds (a factor $\approx130$)
+over the 4.2 e-folds of cooling from $10^6$ to $1.5\times10^4$\,K, which takes
+20\,Myr. A heated medium held at $10^6$\,K gains the same 4.9 e-folds in
+$3.5\,t_{\rm cool,0}=118$\,Myr; it gains only 0.84 e-folds in 20\,Myr. Comparing
+the two at equal elapsed time, as an earlier draft did, therefore mostly measures
+how fast $\tcool$ collapses, not a difference in the instability.
+
+\paragraph{Linear in which variable?} ``Linear'' requires both $|\drho|\ll1$ and
+$|\delta T/T|\ll1$. For short wavelengths the two are equal and opposite. For
+long wavelengths ($x\gtrsim1$) the density is nearly frozen while $\delta T/T$
+grows by up to a factor $\sim45$ during cooling (Section~\ref{sec:isochoric}):
+a seed of $\drho=0.02$ produces $\delta T/T\approx0.9$ near the end of cooling.
+The temperature perturbation then goes nonlinear first, and the threshold seed
+amplitude must be set by it (Figure~\ref{fig:minamp}).
 
 %======================================================================
 \section{Results}
 \label{sec:results}
 %======================================================================
 
-\subsection{Validation}
-Periodic gPLUTO runs with $A=10^{-4}$ match the linear theory to 3--4 significant
-figures through the whole cooling history, for $\lambda/(\cstc)=0.1$, 1 and 10,
-with the original cooling (Figure~\ref{fig:validation}) and with the UV
-background (Figure~\ref{fig:validationuvb}). The five seed types of
-Section~\ref{sec:seeds} match equally well (Figure~\ref{fig:perthist}).
+\subsection{Validation and the long-time evolution}
+\label{sec:validation}
+Periodic gPLUTO runs with $A=10^{-4}$ match the linear theory through the whole
+cooling history and for 200 cooling times afterwards, for $x=0.1$, 1 and 10, with
+a floor and with the UV background (Figure~\ref{fig:validation}). The five seed
+types of Section~\ref{sec:seeds} match equally well (Figure~\ref{fig:perthist}).
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{fig2_validation.png}
-\caption{Infinite medium, $n=10^{-2}$\,cm$^{-3}$, $Z=0.3$, $T_0=10^6$\,K,
-original cooling. Circles: gPLUTO; lines: linear theory. Left: mode amplitude
-against time. Right: against the background temperature; the dashed curve is
-the short-wavelength time-shift limit, Eq.~(\ref{eq:timeshift}).}
+\includegraphics[width=\textwidth]{figP02_validation_long.png}
+\caption{Infinite medium, $Z=0.3$, $T_0=10^6$\,K, $A=10^{-4}$, followed to
+$1000\,\tcool$ (linear theory, lines) and $200\,\tcool$ (gPLUTO, circles; 512 cells
+per wavelength). Left: CIE + floor, $n=10^{-2}$\,cm$^{-3}$ ($\tcool=20$\,Myr).
+Middle: UV background, $n=10^{-3}$\,cm$^{-3}$ ($\tcool=320$\,Myr). After the gas has
+cooled the perturbation oscillates as a sound wave; the curves show its amplitude,
+the maximum of $|\drho|$ over the preceding sound period, and the dashed line marks
+the Hubble time. Right: the growth while cooling against the background
+temperature; the dashed curve is the short-wavelength time-shift limit,
+Eq.~(\ref{eq:timeshift}).}
 \label{fig:validation}
 \end{figure}
 
-\subsection{Growth versus $\lambda/(\cstc)$}
+\paragraph{Do the perturbations eventually go away?} Once all the gas has reached
+the floor (or $\Teq$), the temperature perturbation is erased, but the density
+perturbation is not. It is no longer supported by a temperature difference, so it
+turns into a sound wave of the cold gas, with period $\lambda/c_{s,\rm cold}$
+($c_{s,\rm cold}\approx15$\,km\,s$^{-1}$, ten times smaller than initially). What
+happens next depends on the wavelength and on the thermal model
+(Figure~\ref{fig:validation}):
+\begin{itemize}
+\item \emph{Short wavelengths} ($x=0.1$): the growth peaks at $\sim100$ within
+  $1$--$3\,\tcool$. With a hard floor the resulting sound wave persists, decaying
+  only slowly (to $\sim50$ by $10\,\tcool$ and $\sim20$ by $300\,\tcool$). With the
+  UV background it damps away within $\sim10$ cooling times (below the seed amplitude by
+  $\sim15\,\tcool$ and $\sim10^{-2}$ of it by $30\,\tcool$): gas at $\Teq$ is thermally stable, so compressions
+  radiate away their excess heat out of phase with the wave.
+\item \emph{Intermediate wavelengths} ($x=1$): the density keeps growing after
+  cooling, driven by the velocity imprinted during cooling, and peaks at $\sim35$
+  after $10$--$20\,\tcool$, about a quarter of the cold sound-crossing time. It then
+  decays slowly; with the UV background it is gone by $\sim1000\,\tcool$.
+\item \emph{Long wavelengths} ($x=10$): the density grows only slowly, to $\sim5$
+  after $50\,\tcool$, and stays at 3--5 for longer than the Hubble time.
+\end{itemize}
+So the perturbations do eventually go away, but only through damping of the
+post-cooling sound waves, and only at short wavelengths within a Hubble time.
+For $n=10^{-3}$ and the UV background $\tcool=320$\,Myr, so the Hubble time is only
+$44\,\tcool$; for $n=10^{-2}$ with the floor it is $680\,\tcool$. In the nonlinear
+runs shown later, the sound waves also steepen into shocks and dissipate.
+
+\subsection{Growth versus $\lambda/(\cstc)$ in linear theory}
 \label{sec:growthx}
-Table~\ref{tab:inf} and Figure~\ref{fig:linear} give the amplification of an
-infinite medium. In a small cloud held at constant pressure, the compression adds
-a large factor: $\sim10^3$ while cooling at $x\lesssim0.1$ and
-$\sim3$--$4\times10^3$ by $3\,\tcool$. Metallicity enters mostly through $\cstc$; at
-fixed $x$, $Z=0.05$ and $Z=1$ differ by $\lesssim30\%$. Starting cooler leaves
-less of the cooling curve to traverse: from $2.5\times10^5$\,K the
+\textbf{Figures~\ref{fig:linear}--\ref{fig:minamp} and Table~\ref{tab:inf} are
+linear theory only} (numerical integration of
+Eqs.~\ref{eq:s}--\ref{eq:bg}; no simulations). The infinite-medium amplification
+falls from $\sim70$ while cooling at $x=0.03$ to nothing at $x\gtrsim10$. A small
+isobaric cloud amplifies far more, $\sim10^3$ while cooling at $x\lesssim0.1$, because
+compression raises the exponent in Eq.~(\ref{eq:timeshift}) from $1/\gamma$ to 1, but
+this limit is hard to reach (Section~\ref{sec:backgrounds}). Metallicity enters mostly through
+$\cstc$; at fixed $x$, $Z=0.05$ and $Z=1$ differ by $\lesssim30\%$. Starting cooler
+leaves less of the cooling curve to traverse: from $2.5\times10^5$\,K the
 infinite-medium amplification is $\lesssim25$ (Figure~\ref{fig:linearT0}).
 
 \begin{table}[H]
 \centering
 \small
 \caption{Linear-theory amplification of an infinite medium starting at
-$10^6$\,K ($Z=0.3$, original cooling). The simulations agree
+$10^6$\,K ($Z=0.3$, CIE + floor). The simulations agree
 (Figure~\ref{fig:infsims}).}
 \label{tab:inf}
 \begin{tabular}{lrrrrrr}
@@ -347,39 +431,41 @@ growth by $3\,\tcool$ & 124 & 103 & 66 & 24 & 4 & 1.3 \\
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{fig3_linear_amplification.png}
-\caption{Linear-theory amplification against $\lambda_0/(\cstc)_0$ for four
-metallicities, $T_0=10^6$\,K. Left: infinite medium. Right: small cloud at
-constant pressure (shown only for $\lambda<\cstc$, where it applies). Solid: maximum
-while cooling; dotted: maximum by $3\,\tcool$. Dashed grey: growth of the same
-mode in the heated medium of \citet{das21} over the same elapsed time
-(Section~\ref{sec:whyheated}).}
+\caption{\textbf{Linear theory} (no simulations): amplification against
+$\lambda_0/(\cstc)_0$ for four metallicities, $T_0=10^6$\,K, CIE + floor. Left:
+infinite medium (isochoric background). Right: small cloud (isobaric background,
+Section~\ref{sec:backgrounds}), shown only for $\lambda<\cstc$. Solid: maximum while
+cooling; dotted: maximum by $3\,\tcool$.}
 \label{fig:linear}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{fig3b_linear_amplification_T0.png}
-\caption{As Figure~\ref{fig:linear} (growth while cooling, $Z=0.3$) for three
-initial temperatures.}
+\caption{\textbf{Linear theory}: as Figure~\ref{fig:linear} (growth while cooling,
+$Z=0.3$) for three initial temperatures.}
 \label{fig:linearT0}
 \end{figure}
 
-Figure~\ref{fig:minamp} turns this into the smallest seed that reaches
-$\drho\sim1$ by $3\,\tcool$. In an infinite medium or a large cloud it is about
-1\% for $x\lesssim0.3$, 4\% at $x=1$ and 25\% at $x\approx3$; for $x\gtrsim10$ no
-seed below order unity gets there. In a small isobaric cloud it is
-$2\times10^{-4}$ to $2\times10^{-3}$.
+Figure~\ref{fig:minamp} turns this into the smallest seed that goes nonlinear by
+$3\,\tcool$. Using the density alone, it is about 1\% for $x\lesssim0.3$ in an
+infinite medium, 4\% at $x=1$ and 25\% at $x\approx3$, and $2\times10^{-4}$ to
+$2\times10^{-3}$ in a small isobaric cloud. Using the temperature as well, the
+threshold at $x\gtrsim1$ drops to MINAMPT, because $\delta T/T$ reaches order
+unity long before $\drho$ does.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{fig4_min_amplitude_nonlinear.png}
-\caption{Smallest initial $\drho$ that reaches order unity by $3\,\tcool$
-(linear theory), against the initial wavelength in kpc, for three densities.
-With collisional cooling the curves are the same function of
-$\lambda/(\cstc)$, shifted because $\cstc\propto1/n$.}
+\caption{\textbf{Linear theory}: smallest initial $\drho$ for which $|\drho|$
+(solid) or $|\delta T/T|$ (dashed) reaches 1 by $3\,\tcool$, against the initial
+wavelength in kpc, for three densities. Left: infinite medium; right: small cloud
+(isobaric background). With collisional cooling the curves are the same function
+of $\lambda/(\cstc)$, shifted because $\cstc\propto1/n$.}
 \label{fig:minamp}
 \end{figure}
 
+\subsection{Infinite-medium simulations}
 The 63 infinite-medium simulations (Figure~\ref{fig:infsims}) follow the linear
 theory for $A\le10^{-2}$. For $A=0.1$ the growth saturates near 15 ($\drho\approx1.5$)
 and the gas condenses into clumps 30--45 times denser than the mean for $x\lesssim1$.
@@ -387,118 +473,95 @@ and the gas condenses into clumps 30--45 times denser than the mean for $x\lesss
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{fig5_infinite_sims.png}
-\caption{Infinite-medium simulations (points) for three seed amplitudes and three
-metallicities, against linear theory (dashed). The $A=0.1$ runs saturate in the
-nonlinear regime.}
+\caption{Infinite-medium simulations (points; 512 cells per wavelength, CIE +
+floor, $n=10^{-2}$) for three seed amplitudes and three metallicities, against
+linear theory (dashed). The $A=0.1$ runs saturate in the nonlinear regime.}
 \label{fig:infsims}
 \end{figure}
 
 \subsection{Clouds}
 \label{sec:clouds}
-Figure~\ref{fig:clouds} collects all 62 cloud runs. Clouds with
-$L\gtrsim1.5\,\cstc$ lie on the infinite-medium curve: the interior of a large
-cloud behaves like an infinite medium. Smaller clouds lie between the
-infinite-medium and small-cloud limits. Typical values for $\chi=2$ are in
-Table~\ref{tab:clouds}.
+Figure~\ref{fig:chi1} collects the 54 cloud runs. \textbf{Clouds with
+$L\gtrsim1.5\,\cstc$ lie on the infinite-medium curve}, while cooling and afterwards,
+with both cooling models (Table~\ref{tab:clouds}). The interior of a large cloud
+behaves like an infinite medium. With collisional cooling, $n$ and $L$ are exactly
+degenerate: clouds with $(n,L)=(10^{-2},50\,{\rm kpc})$, $(10^{-3},500\,{\rm kpc})$
+and $(10^{-4},5000\,{\rm kpc})$ give growth factors 1.689 and 5.892 to four digits.
 
 \begin{table}[H]
 \centering
 \small
-\caption{Growth of the seeded mode in cloud runs with $\chi=2$ and $L\ge1.5\,\cstc$
-(medians in bins of $x$).}
+\caption{Growth of the seeded mode in resolved clouds with $L\ge1.5\,\cstc$
+(medians in bins of $x$; CIE + floor / UV background).}
 \label{tab:clouds}
-\begin{tabular}{lrrrrr}
+\begin{tabular}{lrrrr}
 \toprule
-$x=\lambda/(\cstc)$ & $\sim0.2$ & $\sim1$ & $\sim2$ & $\sim5$ & $\ge10$ \\
+$x=\lambda/(\cstc)$ & 0.3--1 & 1--3 & 3--10 & $\ge10$ \\
 \midrule
-growth while cooling & 18 & 4 & 1.9 & 1.2 & 1.0 \\
-growth by $2.5\,\tcool$ & 32 & 15 & 5.8 & 2.2 & 1.06 \\
+growth while cooling    & 5.4 / 6.5 & 1.6 / 2.1 & 1.07 / 1.14 & 1.00 / 1.00 \\
+growth by $2.5\,\tcool$ & 32 / 40   & 5.4 / 9.1 & 1.5 / 2.0   & 1.01 / 1.02 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{fig6_cloud_sweep.png}
-\caption{All 62 cloud runs (original cooling). \textbf{Every run has 2048 cells;
-the symbols do not encode the cell count.} Colour encodes the cloud size in units of
-the cooling length, $L/(\cstc)$, in four bins. Filled symbols are
-well resolved; \textbf{open symbols mark runs in which the cloud was compressed so
-much that, after the compression, the seeded wavelength spans fewer than 10
-cells}, so their late-time values are unreliable (Section~\ref{sec:resolution}).
-Left: growth while cooling; middle: by $2.5\,\tcool$; dashed and dotted lines are
-the infinite-medium and small-cloud linear theory. Right: a maximum of
-$\rho/\bar\rho-1$ over the whole cloud (including the edges) against the interior
-maximum. The whole-cloud value is dominated by the compressed edges, which is why
-the interior should be used, as in the student's analysis.}
-\label{fig:clouds}
-\end{figure}
+Clouds smaller than $\cstc$ (open symbols) are compressed by 100--400 in density
+as they cool, collapsing to slabs only a few cells wide. Their growth while
+cooling, 20--70, lies below the isobaric limit, for three reasons: the isobaric
+approximation fails partway through the cooling (Section~\ref{sec:backgrounds});
+with $A=0.02$ a growth of $\sim50$ is already nonlinear, $\drho\approx1$; and the
+collapsed cloud is not resolved. The amplitude and resolution study of
+Section~\ref{sec:resolution} separates these. Their late-time values are not
+reliable.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{fig7_profiles.png}
-\caption{Density, pressure and temperature profiles at several times. Top: a large
-cloud ($L\approx190\,\cstc$); it cools at constant density, its pressure drops
-by a factor 50, and the seeded mode does not grow while the edges are
-compressed. Bottom: a cloud with $L\approx0.6\,\cstc$; it is compressed as it
-cools, the perturbation goes nonlinear around $10^5$\,K, and the cold gas
-collapses to a thin slab.}
-\label{fig:profiles}
-\end{figure}
-
-\subsection{Clouds with no initial contrast ($\chi=1$)}
-\label{sec:chi1}
-The simplest version of the setup has no density or temperature jump at all: the
-``cloud'' is background gas at $10^6$\,K in which cooling is switched on, with
-the seed on top. The model then depends only on $L/(\cstc)$, $\lambda/(\cstc)$,
-$Z$ and the seed, and the periodic infinite medium is its $L\to\infty$ limit.
-Thirty-six runs ($Z=0.3$; $n_{\rm bg}=10^{-4},10^{-3},10^{-2}$; $L=30$ and 100\,kpc;
-2.5, 4.5 and 8.5 wavelengths per cloud; original cooling and UV background) span
-$L/(\cstc)=0.05$--20. Resolved clouds lie on the infinite-medium curves while
-cooling and afterwards (Figure~\ref{fig:chi1}). Small clouds ($L\lesssim\cstc$)
-collapse by $\sim100$ in density to slabs a few cells wide, and their late-time
-values are not reliable.
-
-Figure~\ref{fig:chi1prof} shows a striking case. At $L\approx1.5\,\cstc$ with the
-UV background, the cloud breaks into cold dense sheets at the crests of the seed,
-while the gas between them expands, its cooling time lengthens, and it stays at
-$\sim6\times10^5$\,K through $3\,\tcool$: a two-phase structure grown from a 2\%
-seed.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{fig22_chi1_clouds.png}
-\caption{$\chi=1$ clouds: growth of the seeded mode while cooling (circles) and by
-$2.5\,\tcool$ (triangles), coloured by $L/(\cstc)$, with the infinite-medium
-linear theory. All runs have 2048 cells; open symbols mark runs whose seeded
-wavelength spans fewer than 10 cells after the cloud's collapse.}
+\includegraphics[width=\textwidth]{figP_chi1_clouds.png}
+\caption{All 54 $\chi=1$ clouds: growth of the seeded mode while cooling (top) and
+by $2.5\,\tcool$ (bottom), with CIE + floor (left) and the UV background (right).
+Every run has 2048 cells, 683 across the cloud; \textbf{the symbols do not encode
+the cell count}. Colour encodes the cloud size $L/(\cstc)$. Open symbols: the
+seeded wavelength spans fewer than 10 cells after the cloud has been compressed.
+Lines: linear theory for the infinite medium (dashed) and a small isobaric cloud
+(dotted); the bottom-row lines are the maximum by $2\,\tcool$.}
 \label{fig:chi1}
 \end{figure}
 
+Figure~\ref{fig:chi1prof} shows three clouds. A large cloud ($L\approx190\,\cstc$)
+cools at constant density: its pressure drops by a factor 100, the seeded mode
+appears as a large temperature and pressure modulation (a factor $\sim10$ in $p$
+near the end of cooling, from a 2\% density seed) while the density hardly
+changes, and only the edges are compressed. A small cloud ($L\approx0.6\,\cstc$)
+fragments into cold sheets at the crests of the seed and then collapses into a
+single slab. At $L\approx1.5\,\cstc$ with the UV background the cloud breaks into
+cold dense sheets, while the gas between them expands, its cooling time lengthens,
+and it stays at $\sim6\times10^5$\,K through $3\,\tcool$: a two-phase structure
+grown from a 2\% seed.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{fig23_chi1_profiles.png}
-\caption{Profiles of two $\chi=1$ clouds with the UV background. Top
-($L\approx1.5\,\cstc$): the cloud splits into cold sheets separated by hot,
-dilute gas. Bottom ($L\approx4.6\,\cstc$): the interior cools nearly uniformly and
-the seeded mode grows slowly.}
+\includegraphics[width=\textwidth]{figP_chi1_profiles.png}
+\caption{Density, pressure (relative to the initial pressure) and temperature
+profiles at 12 times for three $\chi=1$ clouds (2048 cells, 683 across the
+cloud). Top: CIE, $n=10^{-2}$, $L=1000$\,kpc. Middle: CIE, $n=10^{-3}$, $L=30$\,kpc.
+Bottom: UV background, $n=10^{-3}$, $L=100$\,kpc.}
 \label{fig:chi1prof}
 \end{figure}
 
-\paragraph{The cooling switch and numerical mixing.}
+\subsection{The cooling switch and numerical mixing}
+\label{sec:mixing}
 The tracer that switches cooling on is advected with the gas, so the cooling
 region moves inward with the cloud as it contracts and hot gas flowing in behind
 it does not cool. The only non-Lagrangian part is numerical diffusion at the
 cloud edge: cells there contain a mix of cloud and background gas and cool
 partially. The edge stays sharp (4--8 mixed cells), but once a cloud has
 collapsed, hot gas flowing onto the cold slab is mixed into it numerically and
-cools. Table~\ref{tab:mask} tests this on a collapsing $\chi=1$ cloud.
+cools. Table~\ref{tab:mask} tests this on a collapsing cloud.
 
 \begin{table}[H]
 \centering
 \small
 \caption{Hot background gas that ends up cold, relative to the initial cloud mass,
-for a $\chi=1$ cloud with $L\approx0.5\,\cstc$ (UV background, $n_{\rm bg}=10^{-3}$).
+for a cloud with $L\approx0.5\,\cstc$ (UV background, $n=10^{-3}$, box 90\,kpc).
 ``Proportional'': cooling multiplied by the tracer. ``Sharp'': cooling only where
 the tracer exceeds 0.5.}
 \label{tab:mask}
@@ -515,79 +578,69 @@ proportional, 8192 & 71.4 & 10\% & 14\% \\
 
 The growth while cooling is unaffected. The leakage appears only after collapse;
 a sharp switch barely helps, and it decreases only slowly with resolution. Across
-the $\chi=1$ set it is 2--3\% for large clouds, 7--11\% for $L\approx5\,\cstc$ and
-up to $\sim40\%$ for clouds that collapse to a few cells. (For $\chi=2$ clouds it is
-0.3--9\%.) This is a limitation of any fixed-grid code; a switch based on a
-density threshold would be worse, because compressed hot gas crosses the
-threshold. In 1D the clean solution is a Lagrangian (mass-coordinate) code, in
-which the cooling switch is exactly attached to the gas and a collapsing cloud
-keeps its resolution automatically.
+the cloud set it is 2--3\% for large clouds, 7--11\% for $L\approx5\,\cstc$ and up
+to $\sim40\%$ for clouds that collapse to a few cells. This is a limitation of any
+fixed-grid code; a switch based on a density threshold would be worse, because
+compressed hot gas crosses the threshold. In 1D the clean solution is a
+Lagrangian (mass-coordinate) code, in which the cooling switch is exactly
+attached to the gas and a collapsing cloud keeps its resolution automatically.
 
-\subsection{The isochoric regime}
+\subsection{The long-wavelength (isochoric) regime}
 \label{sec:isochoric}
 For $\lambda\gg\cstc$ each parcel cools at its own fixed density. The cooling rate
-per particle is $\propto n\Lambda(T)$, so denser parcels run ahead in
-temperature: $\delta T/T=\delta p/p$ grows 12--50 times during cooling (to
-0.24--1.0 from $\drho=0.02$), independent of $\lambda$. That pressure pattern
-pushes gas from the hotter, underdense parcels into the colder ones. During the
-cooling time the gas moves only $\sim(\cstc/\lambda)^2$ of a wavelength, but the
-velocity persists after cooling, so the density keeps growing roughly linearly in
-time. All 37 cloud runs with $\lambda=2$--$460\,\cstc$ and $L\ge1.5\,\cstc$ follow
+per particle is $\propto n\Lambda(T)$, so denser parcels run ahead in temperature:
+$\delta T/T=\delta p/p$ grows $\approx45$ times during cooling, independent of
+$\lambda$, while the density does not change (Figure~\ref{fig:isochoric}). That
+pressure pattern pushes gas from the hotter, underdense parcels into the colder
+ones. During the cooling time the gas moves only $\sim(\cstc/\lambda)^2$ of a
+wavelength, but the velocity persists after cooling, so the density keeps
+growing. All 26 clouds with $x\ge1.5$ and $L\ge1.5\,\cstc$, with
+$x$ from 1.7 to 230, follow
 \begin{equation}
-G-1\approx25\left(\frac{\cstc}{\lambda}\right)^2\quad\text{by }2.5\,\tcool
+G-1\approx24\left(\frac{\cstc}{\lambda}\right)^2\quad\text{by }2.5\,\tcool
 \label{eq:isoscaling}
 \end{equation}
-(10--90\% range of the prefactor: 21--29; Figure~\ref{fig:isochoric}). This is
-the scaling expected for a pressure impulse of order $\delta T/T$ acting for
-$\sim\tcool$ across a wavelength. The prefactor keeps growing; the convergence
-completes on the sound-crossing time of $\lambda$ in the cold gas, $\approx7x\,\tcool$
-for gas starting at $5\times10^5$\,K, well beyond our runs and the poster's. If
-$\delta T/T$ reaches order unity during cooling, parts of the cloud reach the floor
-while their neighbours are still hot and are crushed; this is the isochoric
-fragmentation picture of \citet{mccourt18}.
+(10--90\% range of the prefactor: 20--29; median 24 with the floor and 28 with
+the UV background). This is the scaling expected for a pressure impulse of order
+$\delta T/T$ acting for $\sim\tcool$ across a wavelength. The growth continues
+for a good fraction of the time sound takes to cross $\lambda$ in the cold gas,
+$\lambda/c_{s,\rm cold}\approx17x\,\tcool$ (Figure~\ref{fig:validation}); our
+cloud runs stop at $3\,\tcool$. If $\delta T/T$ reaches order
+unity during cooling, which here happens for $A\gtrsim0.02$, parts of the cloud
+reach the floor while their neighbours are still hot and are crushed; this is
+the isochoric fragmentation picture of \citet{mccourt18}.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{fig11_isochoric_regime.png}
-\caption{Cloud runs with $\lambda\ge1.5\,\cstc$ and $L\ge1.5\,\cstc$. Left: during
-cooling the temperature/pressure perturbation grows (filled) while the density
-perturbation does not (open). Right: density growth by $2.5\,\tcool$ follows
-Eq.~(\ref{eq:isoscaling}) over two decades in $\lambda$.}
+\includegraphics[width=\textwidth]{figP_chi1_isochoric.png}
+\caption{Clouds with $x\ge1.5$ and $L\ge1.5\,\cstc$ (2048 cells, 80--270 per
+wavelength). Left: during cooling the temperature perturbation grows (filled)
+while the density perturbation does not (open). Right: density growth by
+$2.5\,\tcool$ follows Eq.~(\ref{eq:isoscaling}) over two decades in $\lambda$.}
 \label{fig:isochoric}
 \end{figure}
 
 \subsection{Seed amplitude and resolution}
 \label{sec:resolution}
-For a cloud with $L=50$\,kpc, $\chi=2$, $Z=0.3$ (Figure~\ref{fig:amplitude}):
-\begin{itemize}
-\item $n_{\rm bg}=10^{-2}$ ($L\approx90\,\cstc$): nothing grows for any $A\le0.3$;
-\item $n_{\rm bg}=10^{-3}$ ($L\approx9\,\cstc$): every seed grows the same way,
-  $\times2$ while cooling and $\times6.5$ by $2.5\,\tcool$, linear until
-  $A\approx0.1$; $A=0.3$ goes nonlinear after $\sim2.5\,\tcool$;
-\item $n_{\rm bg}=10^{-4}$ ($L\approx0.9\,\cstc$): $\sim50\times$ growth while
-  cooling and much more during the collapse that follows. Even $A=10^{-3}$ reaches
-  an interior contrast of $\sim15$, which then smooths out to $\lesssim0.1$.
-\end{itemize}
+AMPTEXT
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{fig8_amplitude_scan.png}
-\caption{Interior rms $\drho$ (normalized to its initial value) for six seed
-amplitudes, at three background densities. Original cooling.}
+\includegraphics[width=\textwidth]{figP_chi1_amplitude.png}
+\caption{Interior maximum of $\rho/\bar\rho-1$ for five seed amplitudes in a cloud
+with $L=50$\,kpc, $L/\lambda=4.5$ (2048 cells, 683 across the cloud), at three
+densities, followed to $6\,\tcool$. Top: CIE + floor; bottom: UV background.}
 \label{fig:amplitude}
 \end{figure}
 
-The small cloud is compressed 200--350 times in density and is the hardest case
-to resolve (Figure~\ref{fig:resolution}). Comparing 2048, 4096 and 16384 cells,
-the growth while cooling is converged (52, 52, 51 for $A=10^{-3}$); the peak
-contrast is converged for small seeds (14, 18, 19) but not for $A=0.1$ (28, 47,
-75; a lower limit); the late-time smoothing appears at every resolution.
+RESTEXT
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{fig10_resolution.png}
-\caption{Interior maximum of $\rho/\bar\rho-1$ for the small cloud at three
-resolutions and three seed amplitudes.}
+\includegraphics[width=\textwidth]{figP_chi1_resolution.png}
+\caption{Interior maximum of $\rho/\bar\rho-1$ for the small cloud
+($n=10^{-4}$, $L=50$\,kpc, CIE + floor) with 2048, 4096 and 16384 cells (683,
+1365 and 5461 across the cloud), for three seed amplitudes.}
 \label{fig:resolution}
 \end{figure}
 
@@ -611,21 +664,16 @@ $n=10^{-3}$\,cm$^{-3}$.}
 \label{fig:coolmodels}
 \end{figure}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{fig13_validation_uvb.png}
-\caption{Validation with the UV background ($n=10^{-3}$\,cm$^{-3}$): gPLUTO
-(circles) against linear theory (lines). The gas settles at
-$\Teq\approx1.3\times10^4$\,K.}
-\label{fig:validationuvb}
-\end{figure}
-
 In linear theory (Figure~\ref{fig:linearuvb}) the infinite-medium amplification
 with the UV background is within $\sim25\%$ of Cloudy CIE with a floor at every
-density from $10^{-4}$ to $10^{-2}$, both while cooling and by $3\,\tcool$. For
-small isobaric clouds the totals by $3\,\tcool$ also agree to $\sim25\%$. The
-simulations reproduce the linear theory for every model, metallicity and
-density (Table~\ref{tab:uvb}, Figure~\ref{fig:infuvb}).
+density from $10^{-4}$ to $10^{-2}$, both while cooling and by $3\,\tcool$. The
+simulations reproduce the linear theory for every model, metallicity and density
+(Table~\ref{tab:uvb}, Figure~\ref{fig:infuvb}). For the 15 cloud pairs resolved
+with both models (Figure~\ref{fig:uvcie}), the ratio UV/CIE of the growth while
+cooling has median 1.02 (10--90\%: 1.00--1.31), and of the growth by
+$2.5\,\tcool$ 1.12 (1.00--1.65). The main differences are nonlinear
+(Figure~\ref{fig:amplitude}) and at late times, when the UV background damps the
+post-cooling sound waves (Section~\ref{sec:validation}).
 
 \begin{table}[H]
 \centering
@@ -649,7 +697,7 @@ UV bkg, $n=10^{-2}$      & 82/135 & 37/120 & 11/69 & 3.8/21 & 1.4/4.1 \\
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{fig14_linear_uvb.png}
-\caption{Linear theory, $Z=0.3$, $T_0=10^6$\,K, for the three cooling models.
+\caption{\textbf{Linear theory}, $Z=0.3$, $T_0=10^6$\,K, for the three cooling models.
 Solid: while cooling; dotted: by $3\,\tcool$.}
 \label{fig:linearuvb}
 \end{figure}
@@ -657,39 +705,18 @@ Solid: while cooling; dotted: by $3\,\tcool$.}
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{fig15_infinite_uvb.png}
-\caption{Infinite-medium simulations with the Cloudy tables (points) against linear
-theory (dashed), for three metallicities.}
+\caption{Infinite-medium simulations with the Cloudy tables (points; 512 cells per
+wavelength, $A=10^{-3}$) against linear theory (dashed), for three metallicities.}
 \label{fig:infuvb}
 \end{figure}
 
-For the 39 cloud pairs resolved in both runs (Figure~\ref{fig:clouduvb}), the
-ratio UV/CIE of the growth while cooling has median 1.06 (10--90\%: 1.00--1.78),
-and of the growth by $2.5\,\tcool$ 1.32 (1.01--2.37). Equation~(\ref{eq:isoscaling})
-holds with the same prefactor (median 24). The main difference is nonlinear
-(Figure~\ref{fig:amplitudeuvb}, compared over the same $3\,\tcool$): in the
-intermediate cloud ($n_{\rm bg}=10^{-3}$) the UV background makes large seeds go
-nonlinear sooner. $A=0.3$ reaches an interior contrast of $\sim100$ by
-$1.4\,\tcool$ (CIE + floor: $\sim10$ at $2.5\,\tcool$, $\sim60$ at $3\,\tcool$), and
-$A=0.1$ reaches $\sim8$ (CIE + floor: $\sim1$). In the small cloud the transient
-structure smooths out more completely ($\sim10^{-3}$ against $\sim0.05$).
-
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{fig16_cloud_uvb.png}
-\caption{Cloud runs with the UV background. Left: growth while cooling against
-$x$, coloured by background density; open symbols as in Figure~\ref{fig:clouds}.
-Middle and right: the same clouds with the UV background against the original
-cooling.}
-\label{fig:clouduvb}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{fig17_amplitude_uvb.png}
-\caption{Interior maximum of $\rho/\bar\rho-1$ for four seed amplitudes: collisional
-cooling with a floor (top) and the UV background (bottom), at three background
-densities.}
-\label{fig:amplitudeuvb}
+\includegraphics[width=\textwidth]{figP_chi1_uv_vs_cie.png}
+\caption{The same $\chi=1$ clouds (2048 cells) with the UV background against CIE +
+floor: growth while cooling (left) and by $2.5\,\tcool$ (right). Colours and open
+symbols as in Figure~\ref{fig:chi1}.}
+\label{fig:uvcie}
 \end{figure}
 
 \subsection{Different kinds of perturbation}
@@ -723,7 +750,8 @@ metallicity & $\delta Z/Z=A$ at uniform $\rho$, $p$ & 0 (but faster cooling) \\
 \includegraphics[width=\textwidth]{fig18_pert_histories.png}
 \caption{Infinite medium with the UV background, $n=10^{-3}$\,cm$^{-3}$, $Z=0.3$,
 $T_0=10^6$\,K: density response (left) and entropy perturbation (right) for the five
-seeds, at three wavelengths. Lines: linear theory; circles: gPLUTO ($A=10^{-3}$).}
+seeds, at three wavelengths. Lines: linear theory; circles: gPLUTO ($A=10^{-3}$,
+512 cells per wavelength).}
 \label{fig:perthist}
 \end{figure}
 
@@ -747,8 +775,8 @@ What grows is the entropy (cooling-time) perturbation
 \begin{table}[H]
 \centering
 \small
-\caption{Growth of the density perturbation, relative to the seed amplitude,
-by $3\,\tcool$ (linear theory, infinite medium, $n=10^{-3}$\,cm$^{-3}$, $Z=0.3$).}
+\caption{\textbf{Linear theory}: growth of the density perturbation, relative to
+the seed amplitude, by $3\,\tcool$ (infinite medium, $n=10^{-3}$\,cm$^{-3}$, $Z=0.3$).}
 \label{tab:seedgrowth}
 \begin{tabular}{lrrrrr}
 \toprule
@@ -764,34 +792,31 @@ $\approx15$   & 1.2 & 0.19 & 0.07 & 1.0 & 0.9 \\
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{fig19_pert_linear_survey.png}
-\caption{Linear-theory survey of the five seeds against $x$, without (top) and with
-(bottom) the UV background. Left: maximum while cooling; right: by $3\,\tcool$.}
+\caption{\textbf{Linear theory}: survey of the five seeds against $x$, without (top)
+and with (bottom) the UV background. Left: maximum while cooling; right: by
+$3\,\tcool$.}
 \label{fig:pertlinear}
 \end{figure}
 
-In clouds ($n_{\rm bg}=10^{-3}$, $x\approx1.2$, $A=0.02$) the ordering is the same:
-by $2.5\,\tcool$ the density seed grows 15--16 times, the temperature seed 11--12,
-the sound-wave and metallicity seeds $\sim4$ and the velocity seed $\sim3$. At
-$n_{\rm bg}=10^{-2}$ ($x\approx12$) only the density seed grows ($\times1.17$);
-the others produce at most $0.8A$ (Figure~\ref{fig:pertclouds}). For $A=0.1$ at
-$x=0.1$, density, temperature and metallicity seeds condense into clumps 15--34
-times denser than the mean, sound waves reach $\sim1.4$ and velocity seeds $\sim0.2$
-(Figure~\ref{fig:pertnl}).
+SEEDTEXT
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{fig20_pert_clouds.png}
-\caption{Cloud runs ($L=50$\,kpc, $\chi=2$, $A=0.02$) for the five seeds. Circles:
-maximum while cooling; triangles: maximum by $2.5\,\tcool$. Open: collisional
-cooling with a floor; filled: UV background.}
+\includegraphics[width=\textwidth]{figP_chi1_seeds.png}
+\caption{$\chi=1$ clouds ($A=0.02$) for the five seeds. Left: $n=10^{-3}$,
+$L=200$\,kpc, 6144 cells (3072 across the cloud, 171 per wavelength). Right:
+$n=10^{-2}$, $L=50$\,kpc, 2048 cells (683 across the cloud, 152 per wavelength).
+Circles: maximum while cooling; triangles: maximum by $2.5\,\tcool$. Open: Cloudy
+CIE + floor; filled: UV background.}
 \label{fig:pertclouds}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{fig21_pert_nonlinear.png}
-\caption{Nonlinear seeds ($A=0.1$), infinite medium: maximum of $\rho/\bar\rho-1$
-(circles) and its value at the end of the run (crosses).}
+\caption{Nonlinear seeds ($A=0.1$), infinite medium (512 cells per wavelength):
+maximum of $\rho/\bar\rho-1$ (circles) and its value at the end of the run
+(crosses).}
 \label{fig:pertnl}
 \end{figure}
 
@@ -799,18 +824,15 @@ cooling with a floor; filled: UV background.}
 During cooling a density seed never fell below its initial amplitude in any
 infinite-medium run starting from $10^5$--$10^6$\,K. In linear theory it can only
 shrink where $\LT>2$, which on these curves happens only between about
-$2\times10^4$ and $6\times10^4$\,K. Among 320 density-seed simulations, the only
-dips (to 0.5--0.86 of the seed) are in five small clouds with just 2.5 wavelengths
-per cloud, where motions on the scale of the whole cloud project onto the mode.
-After the gas reaches the floor or $\Teq$:
+$2\times10^4$ and $6\times10^4$\,K. After the gas reaches the floor or $\Teq$ the
+perturbation becomes a sound wave in the cold gas (Section~\ref{sec:validation}):
 \begin{itemize}
-\item at short wavelengths ($x\lesssim0.3$) the perturbation becomes a sound wave in
-  the cold gas and swings through zero. With the UV background, residual entropy is
-  also erased because gas at $\Teq$ is thermally stable; 10 of 91 infinite-medium and
-  14 of 62 cloud runs with the UV background end below their initial amplitude (all
-  after first growing more than twofold), against 0 of 63 and 2 of 62 with the floor;
-\item small clouds smooth out after collapsing;
-\item at $x\gtrsim1$ the post-cooling growth continues through the end of the runs.
+\item at short wavelengths ($x\lesssim0.3$) it swings through zero every half
+  period. With the UV background it damps away within $\sim10$--$30\,\tcool$; with a
+  hard floor it persists;
+\item at $x\gtrsim1$ the density keeps growing long after cooling, for a good fraction of
+  the cold sound-crossing time $\approx17x\,\tcool$;
+\item small clouds smooth out after collapsing (Figure~\ref{fig:amplitude}).
 \end{itemize}
 
 %======================================================================
@@ -818,15 +840,11 @@ After the gas reaches the floor or $\Teq$:
 \label{sec:critique}
 %======================================================================
 \begin{enumerate}
-\item \textbf{Whether the poster's clouds grow depends mostly on $\chi$.} At
-  $n_{\rm bg}=0.01$--0.02 and $T_{\rm bg}\approx10^6$\,K, $\cstc$ of the cloud gas is
-  0.2--1.4\,kpc for $\chi=2$ but $\sim2$--6\,kpc for $\chi\approx1.3$. With
-  $\lambda\approx7$--30\,kpc that is $x\gg1$ for $\chi=2$ but $x\sim2$--5 for
-  $\chi\approx1.3$. For $\chi=1.3$, $Z=0.1$, $n_{\rm bg}=0.01$, $L=50$\,kpc we find
-  $\times1.8$ while cooling and $\times7$ by $2.5\,\tcool$, the same order as the
-  poster's measurements, so her growth looks physical. Most of it comes after the
-  gas has cooled. At $\chi=2$ the perturbations still grow, following
-  Eq.~(\ref{eq:isoscaling}).
+\item \textbf{Measure $\lambda$ and $L$ in units of $\cstc$ of the cloud gas.} With
+  a small contrast the cloud gas is hot and $\cstc$ is large: for $\chi=1$ at
+  $n=10^{-2}$, $\cstc=5$\,kpc, and $\propto1/n$. The poster's $\lambda\approx7$--30\,kpc
+  at $n\approx0.01$--0.02 then corresponds to $x\sim1$--5: modest growth while
+  cooling and most of it afterwards, consistent with what she measured.
 \item \textbf{The diagnostic.} Her central/interior maximum is the right idea.
   Measuring in the mass coordinate (the cloud shrinks) and projecting onto the
   seeded mode (to separate it from harmonics and from waves launched at the edges)
@@ -834,10 +852,9 @@ After the gas reaches the floor or $\Teq$:
 \item \textbf{Comparing runs at a fixed simulation time.} $\tcool$ differs by large
   factors between runs. Normalize time by when the gas actually cools
   (Section~\ref{sec:tnorm}), not by when it reaches the floor exactly.
-\item \textbf{Use dimensionless parameters}: $\lambda/(\cstc)$, $L/(\cstc)$, $\chi$,
-  $Z$ (weakly) and $A$. With collisional cooling, density and size are exactly
-  degenerate: runs with $(n,L)=(10^{-2},50\,{\rm kpc})$, $(10^{-3},500\,{\rm kpc})$
-  and $(10^{-4},5000\,{\rm kpc})$ agree to 3--4 digits.
+\item \textbf{Use dimensionless parameters}: $\lambda/(\cstc)$, $L/(\cstc)$, $Z$
+  (weakly) and $A$. With collisional cooling, density and size are exactly
+  degenerate (Section~\ref{sec:clouds}).
 \item \textbf{Units and run length.} The poster states 0.1 code units = 0.01\,Gyr,
   but the profiles run to $\sim0.1$\,Gyr; with kpc and 100\,km\,s$^{-1}$ units one
   code time unit is 9.78\,Myr. The runs stop around 1--2\,$\tcool$, before most of
@@ -846,16 +863,18 @@ After the gas reaches the floor or $\Teq$:
   is out of pressure balance with the hot gas and edge effects reach the interior.
   The periodic infinite medium avoids this.
 \item \textbf{Background thermal model.} Switching cooling on only in cloud gas
-  works well; a tracer is cleaner than a density threshold (Section~\ref{sec:setup}).
-  Uniform heating equal to the background cooling, with cooling everywhere, made the
-  shocked hot gas cool into thin radiative shells, and those runs stalled.
-\item \textbf{Resolution.} A cloud smaller than $\cstc$ is compressed 50--350 times,
+  works well; a tracer is cleaner than a density threshold (Section~\ref{sec:switch}).
+\item \textbf{Resolution.} A cloud smaller than $\cstc$ is compressed 100--400 times,
   so cells per wavelength must be counted after the collapse.
+\item \textbf{Linearity.} For $x\gtrsim1$ the temperature perturbation goes nonlinear
+  long before the density does (Figure~\ref{fig:minamp}); a 2\% seed is already
+  nonlinear in temperature.
 \item \textbf{Single sinusoid, single quantity.} The kind of perturbation matters as
   much as its amplitude (Section~\ref{sec:seeds}). A spectrum with random phases in
   several fields is the natural next step.
 \item \textbf{Cooling at low density.} A UV background is the better default for CGM
-  densities, although it changes the linear results only modestly.
+  densities. It changes the growth while cooling only modestly but damps the
+  post-cooling sound waves.
 \item \textbf{1D limits.} Cold gas can only form slabs, and at a uniform floor
   temperature and pressure the slabs end at the same density. ``Shattering''
   needs 2D or 3D; the 1D survey tells you which ($x$, $L/\cstc$, $A$, seed type) to
@@ -867,12 +886,12 @@ After the gas reaches the floor or $\Teq$:
 \item Reproduce Figure~\ref{fig:validation} with the student's own PLUTO install,
   to validate the code, cooling table and diagnostic.
 \item Make the central plot amplification against $\lambda/(\cstc)$ for several
-  $L/(\cstc)$ with linear theory and simulations together (Figure~\ref{fig:clouds}),
+  $L/(\cstc)$ with linear theory and simulations together (Figure~\ref{fig:chi1}),
   then the minimum-amplitude map (Figure~\ref{fig:minamp}) and the seed comparison
   (Figure~\ref{fig:pertlinear}).
-\item Run longer ($\gtrsim5\,\tcool$) to see where the post-cooling growth saturates,
-  then follow the nonlinear outcome for $x\lesssim1$ and $A\gtrsim0.01$ at higher
-  resolution and in 2D.
+\item Follow the small, collapsing clouds with a 1D Lagrangian code, which removes
+  the edge mixing and keeps the resolution, and the nonlinear outcome for
+  $x\lesssim1$ and $A\gtrsim0.01$ in 2D.
 \end{enumerate}
 
 \section{Limitations}
@@ -881,27 +900,32 @@ After the gas reaches the floor or $\Teq$:
   $2\times10^5$ and $3\times10^6$\,K); the Cloudy runs give the same trends.
 \item The UV-background runs use $z=0$ only, keep the mean molecular weight of fully
   ionized gas (so $T$ is slightly misplaced near $10^4$\,K), and ignore self-shielding.
+\item The behaviour after cooling with a floor depends on how the floor is
+  implemented (here a smooth cutoff, $1-1/\cosh[(T/\Tfl)^{12}]$).
 \item The PLUTO~4.4 port of the setup in the repository was not compiled.
 \item Late-time values for strongly compressed small clouds are resolution-limited
   (Section~\ref{sec:resolution}).
 \end{itemize}
 
 \appendix
-\section{Corrections to earlier versions}
+\section{Changes from earlier versions}
 \label{app:corrections}
 \begin{itemize}
+\item \textbf{Only $\chi=1$.} Earlier drafts used clouds denser than the
+  background, mostly $\chi=2$. All cloud results are now for $\chi=1$; the
+  amplitude, resolution, seed-type and long-wavelength sets were rerun.
+\item \textbf{Comparison with a heated medium.} An earlier draft compared the
+  amplification of cooling and heated gas over the same elapsed time. Since the
+  background of cooling gas changes by a large factor, the fair comparison is per
+  e-fold of cooling (Section~\ref{sec:whyheated}).
 \item \textbf{Time normalization.} Earlier versions ended ``cooling'' when the gas
   reached $1.05\,\Tfl$ or $1.05\,\Teq$. With the corrected definition the growth
-  while cooling is about two times smaller at $x\lesssim0.3$, the prefactor of
-  Eq.~(\ref{eq:isoscaling}) is 25 rather than 50, and the $\chi=1.3$ example gives
-  $\times1.8$ and $\times7$ rather than $\times3$ and $\times10$.
+  while cooling is about two times smaller at $x\lesssim0.3$ and the prefactor of
+  Eq.~(\ref{eq:isoscaling}) is $\approx25$ rather than 50.
 \item \textbf{UV background.} An earlier version said the UV background roughly
   halves the growth while cooling at $x\approx0.3$--3. That came from the slow final
   approach to the floor in the Cloudy CIE table inflating its end-of-cooling time;
   with consistent times the two agree to $\sim20\%$.
-\item \textbf{Run lengths.} Late-time contrasts were previously compared across runs
-  of different length in units of $\tcool$; they are now compared over the same
-  $3\,\tcool$.
 \item \textbf{Diagnostic.} An early version said the poster's measurement was
   dominated by the cloud edges; the student measures the interior, which is sound.
 \end{itemize}

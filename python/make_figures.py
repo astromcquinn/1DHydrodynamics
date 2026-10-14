@@ -130,13 +130,6 @@ def fig_linear_maps():
             a.loglog(m["x"][sel][o], m["G_max_cool"][sel][o], color=ZCOL[Z],
                      label=f"Z = {Z}")
             a.loglog(m["x"][sel][o], m["G_3tf"][sel][o], color=ZCOL[Z], lw=1, ls=":")
-        sel = (m["bg"] == bg) & (m["Z"] == 0.3) & (m["T0"] == 1e6)
-        if bg == "isobaric":
-            sel &= m["x"] <= 1.0
-        o = np.argsort(m["x"][sel])
-        a.loglog(m["x"][sel][o], np.where(m["x"][sel][o] < 1, m["das_isobaric"][sel][o],
-                                          m["das_isochoric"][sel][o]),
-                 color=INK2, lw=1, ls="--", label="heated medium (Das et al.), same elapsed time")
         a.axvline(1, color=GRID, lw=1)
         a.set_xlabel(r"$\lambda_0 / (c_s t_{cool})_0$")
         a.set_title(title + r", $T_0=10^6$ K")
@@ -176,9 +169,14 @@ def fig_linear_maps():
             # x is measured with the initial (cloud) gas; for n=0.01 cs*tcool:
             cst = sweep_cs_tcool(n, 1e6, 0.3)
             a.loglog(x * cst, np.minimum(1.0 / G, 1.0), color=c, label=f"n = {n:g} cm$^{{-3}}$")
+            if "dT_max_3tf" in m:
+                dT = m["dT_max_3tf"][sel][o]
+                a.loglog(x * cst, np.minimum(1.0 / dT, 1.0), color=c, lw=1, ls="--")
         a.set_xlabel(r"initial wavelength $\lambda_0$ [kpc]")
         a.set_title(f"{bg} background, Z = 0.3, T$_0$ = 10$^6$ K")
-    ax[0].set_ylabel(r"min. $\delta\rho/\rho$ that reaches order unity")
+    ax[0].set_ylabel(r"min. initial $\delta\rho/\rho$ that goes nonlinear")
+    ax[0].plot([], [], color=INK2, lw=2, label=r"$|\delta\rho/\rho|$ reaches 1")
+    ax[0].plot([], [], color=INK2, lw=1, ls="--", label=r"$|\delta T/T|$ reaches 1")
     ax[0].legend(fontsize=8)
     save(fig, "fig4_min_amplitude_nonlinear.png")
 
