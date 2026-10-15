@@ -300,7 +300,15 @@ def nonlinear_runs():
     return runs
 
 
-SWEEPS = dict(nonlinear=nonlinear_runs, chi1=chi1_runs, chi1_large=chi1_large_runs, chi1_amplitude=chi1_amplitude_runs,
+def nonlinear_res_runs():
+    """Resolution check of the nonlinear sweep: CIE, A = 0.1, L/(c_s t_cool) = 0.3
+    and 1, at 4x the cells (16384)."""
+    return [dict(kw, nx=16384, name=kw["name"] + "_nx16384") for kw in nonlinear_runs()
+            if kw["cooling"] == "cie" and kw["amp"] == 0.1 and kw["L_cloud"] > 0
+            and any(f"_Lx{s}_" in kw["name"] for s in ("0p3", "1"))]
+
+
+SWEEPS = dict(nonlinear=nonlinear_runs, nonlinear_res=nonlinear_res_runs, chi1=chi1_runs, chi1_large=chi1_large_runs, chi1_amplitude=chi1_amplitude_runs,
               chi1_resolution=chi1_resolution_runs, chi1_pert=chi1_pert_runs, chi1_pert_big=chi1_pert_big_runs,
               chi1_scaling=chi1_scaling_runs, longval=longval_runs, pert_infinite=pert_infinite_runs, pert_cloud=pert_cloud_runs,
               infinite_uvb=infinite_uvb_runs, cloud_uvb=cloud_uvb_runs,
