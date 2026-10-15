@@ -241,6 +241,10 @@ class Run:
                 sel = np.ones(nx, bool)
             else:
                 sel = trc > 0.5
+                if sel.sum() < 3:
+                    # cloud collapsed to a few cells and diluted by numerical mixing:
+                    # fall back to the cells with the most cloud material
+                    sel = trc >= 0.5 * trc.max()
             m_c = rho[sel] * dx
             M = m_c.sum()
             # mass coordinate relative to the cloud's centre of mass
