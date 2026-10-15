@@ -1,6 +1,6 @@
 """
-Regenerate the numbers quoted in the chi = 1 write-up (results/latex/report.tex,
-mirrored as main.tex in astromcquinn/cooling-perturbations-paper).
+Regenerate the numbers quoted in the chi = 1 write-up (main.tex in
+astromcquinn/cooling-perturbations-paper).
 
     python paper_numbers.py            # everything (linear-theory parts take ~1-2 min)
     python paper_numbers.py clouds     # one section; see SECTIONS at the bottom
