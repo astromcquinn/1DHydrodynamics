@@ -224,6 +224,18 @@ def runaway():
         print(f"t_ff (v_c=200 km/s) at {r} kpc: {np.sqrt(2) * r * C.kpc / 200e5 / C.Myr:.0f} Myr")
 
 
+def sonic_vc():
+    """Discussion, Table 'vc': short-wavelength amplification at constant density from
+    T_vir = mu m_p v_c^2 / 2k to 1.5e4 K (Eq. timeshift), and the seed 1/G."""
+    header("Amplification from T_vir (Table 'vc')")
+    tab = C.CoolingTable.for_Z(0.3)
+    mu = 0.6
+    for vc in [100, 150, 200, 250]:
+        Tvir = mu * C.mp * (vc * 1e5) ** 2 / (2 * C.kB)
+        G = ((Tvir / 1.5e4) ** 2 * tab(1.5e4) / tab(Tvir)) ** (1 / C.GAMMA)
+        print(f"v_c={vc}: T_vir={Tvir:.2g} K, G={G:.0f}, seed={100 / G:.2g}%")
+
+
 def nonlinear():
     """Section 'Nonlinear outcome': end-state contrast vs T_hot/T_cold, overshoot,
     resolution check, large clouds."""
@@ -243,7 +255,7 @@ def nonlinear():
 SECTIONS = dict(nonlinear=nonlinear, runaway=runaway, long_time=long_time, heated_table=heated_table, isobaric_validity=isobaric_validity,
                 thresholds=thresholds, clouds=clouds, isochoric=isochoric, uv_vs_cie=uv_vs_cie,
                 amplitude_resolution=amplitude_resolution, small_cloud_history=small_cloud_history,
-                seeds=seeds, conduction=conduction)
+                seeds=seeds, conduction=conduction, sonic_vc=sonic_vc)
 
 if __name__ == "__main__":
     for name in (sys.argv[1:] or SECTIONS):
