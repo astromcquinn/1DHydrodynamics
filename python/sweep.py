@@ -13,6 +13,7 @@ Parameter sweeps of gPLUTO runs (parallel, resumable).
     python sweep.py chi1_large chi1_amplitude chi1_resolution chi1_pert chi1_pert_big chi1_scaling
                                   # more chi = 1 sets
     python sweep.py longval       # infinite medium followed to 200 t_cool
+    python sweep.py nonlinear     # nonlinear outcome vs hot-gas temperature
     python sweep.py pert_infinite pert_cloud
                                   # density, temperature, sound, velocity and
                                   # metallicity seeds
@@ -278,7 +279,28 @@ def longval_runs():
     return runs
 
 
-SWEEPS = dict(chi1=chi1_runs, chi1_large=chi1_large_runs, chi1_amplitude=chi1_amplitude_runs,
+def nonlinear_runs():
+    """Nonlinear outcome (contrast with the hot gas, cf. Gronke & Oh 2020): chi = 1
+    clouds with L/(c_s t_cool) = 0.3-10 and L/lambda = 4.5, seeds of 3-30%, for hot
+    gas at 3e5, 1e6 and 3e6 K, with and without the UV background (n = 1e-3);
+    plus infinite-medium runs with 30% seeds."""
+    runs = []
+    n = 1e-3
+    for cool, T, Lx, A in itertools.product(["cie", "pie"], [3e5, 1e6, 3e6],
+                                           [0.3, 1.0, 3.0, 10.0], [0.03, 0.1, 0.3]):
+        L = Lx * cs_tcool_model(n, T, 0.3, cool)
+        runs.append(dict(name=f"nl_{cool}_T{_fmt(T)}_Lx{_fmt(Lx)}_A{_fmt(A)}", rho_bg=n,
+                         T_bg=T, chi=1.0, L_cloud=L, lam=L / 4.5, Z=0.3, amp=A, nx=4096,
+                         box=3 * L, tstop_factor=4.0, nout=200, cooling=cool))
+    for T, x in itertools.product([3e5, 1e6, 3e6], [0.1, 0.3, 1.0, 3.0]):
+        lam = x * cs_tcool_model(n, T, 0.3, "cie")
+        runs.append(dict(name=f"nlinf_cie_T{_fmt(T)}_x{_fmt(x)}_A0p3", rho_bg=n, T_bg=T,
+                         chi=1.0, L_cloud=-1, lam=lam, Z=0.3, amp=0.3, nx=1024,
+                         tstop_factor=4.0, nout=200, cooling="cie"))
+    return runs
+
+
+SWEEPS = dict(nonlinear=nonlinear_runs, chi1=chi1_runs, chi1_large=chi1_large_runs, chi1_amplitude=chi1_amplitude_runs,
               chi1_resolution=chi1_resolution_runs, chi1_pert=chi1_pert_runs, chi1_pert_big=chi1_pert_big_runs,
               chi1_scaling=chi1_scaling_runs, longval=longval_runs, pert_infinite=pert_infinite_runs, pert_cloud=pert_cloud_runs,
               infinite_uvb=infinite_uvb_runs, cloud_uvb=cloud_uvb_runs,

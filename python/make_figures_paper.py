@@ -357,6 +357,83 @@ def fig_chi1_seeds():
                   keep=lambda d: d["params"]["rho_bg"] == 1e-2 or d["params"]["L_cloud"] == 200.0)
 
 
+# ---------------------------------------------------------------------------
+NL_TCOL = {3e5: S1, 1e6: S2, 3e6: S3}
+NL_MARK = {0.3: "v", 1.0: "o", 3.0: "s", 10.0: "D"}
+
+
+def nl_metrics(d):
+    """Peak and late-time contrast between cold cloud gas and the hot ambient gas."""
+    p = d["params"]
+    t = d["t"] / tc(d)
+    chi = np.asarray(d["nl_rho_cold"]) / np.asarray(d["nl_rho_hot"])
+    chimax = np.asarray(d["nl_rho_max"]) / np.asarray(d["nl_rho_hot"])
+    ok = np.isfinite(chi)
+    late = ok & (t >= 0.8 * t[-1])
+    i = np.nanargmax(np.where(ok, chi, np.nan)) if ok.any() else 0
+    defic = 1 - np.asarray(d["nl_p_min"]) / np.asarray(d["nl_p_hot"])
+    return dict(T=p["T_bg"], A=p["amp"], cool=p["cooling"],
+                Lx=round(p["L_cloud"] / d["cs_tcool0"], 1) if p["L_cloud"] > 0 else np.inf,
+                x=p["lam"] / d["cs_tcool0"],
+                chi_peak=np.nanmax(chi) if ok.any() else np.nan, t_peak=t[i],
+                chimax_peak=np.nanmax(chimax[ok]) if ok.any() else np.nan,
+                chi_late=np.nanmedian(chi[late]) if late.any() else np.nan,
+                cells_peak=int(np.asarray(d["nl_cells_densest"])[i]),
+                ncold_late=int(np.median(np.asarray(d["nl_ncold"])[late])) if late.any() else 0,
+                cold_frac=float(np.asarray(d["nl_cold_mass"])[-1] / np.asarray(d["nl_mass"])[0]),
+                deficit=np.nanmax(defic[t <= 1.5]))
+
+
+def fig_nonlinear():
+    R = [d for d in runs("nonlinear") if d["params"]["L_cloud"] > 0]
+    if not R:
+        return
+    M = [nl_metrics(d) for d in R]
+    fig, ax = plt.subplots(1, 3, figsize=(15, 4.3))
+    for col, cool, title in [(0, "cie", "CIE + 10$^4$ K floor"), (1, "pie", "UV background")]:
+        a = ax[col]
+        for mm in M:
+            if mm["cool"] != cool:
+                continue
+            c = NL_TCOL[mm["T"]]
+            jit = {0.3: 0.85, 1.0: 0.95, 3.0: 1.05, 10.0: 1.15}[mm["Lx"]]
+            a.loglog(mm["A"] * jit, mm["chi_peak"], NL_MARK[mm["Lx"]], color=c, ms=7)
+            a.loglog(mm["A"] * jit, mm["chi_late"], NL_MARK[mm["Lx"]], color=c, ms=7, mfc="none")
+        for T, c in NL_TCOL.items():
+            a.axhline(T / 1e4, color=c, lw=0.8, ls=":")
+        a.axhline(300, color=INK2, lw=1.2, ls="--")
+        a.text(0.026, 330, "Gronke & Oh χ$_f$ ≈ 300", fontsize=8, color=INK2)
+        a.set_xlabel("seed amplitude A")
+        a.set_title(title)
+        a.set_ylim(1, 3e4)
+    ax[0].set_ylabel(r"cold / hot density, $\langle\rho_{\rm cold}\rangle/\rho_{\rm hot}$")
+    h = [Line2D([], [], color=c, marker="o", ls="none", label=f"T$_{{hot}}$ = {T:.0e} K")
+         for T, c in NL_TCOL.items()]
+    h += [Line2D([], [], color=INK2, marker=m, ls="none", label=f"L/c$_s$t$_{{cool}}$ = {Lx:g}")
+          for Lx, m in NL_MARK.items()]
+    h += [Line2D([], [], color=INK2, marker="o", ls="none", label="peak"),
+          Line2D([], [], color=INK2, marker="o", mfc="none", ls="none", label="late (last 20%)"),
+          Line2D([], [], color=INK2, ls=":", label="T$_{hot}$/10$^4$ K")]
+    ax[1].legend(handles=h, fontsize=7, loc="upper left", ncol=2)
+    # pressure deficit vs late contrast
+    a = ax[2]
+    for mm in M:
+        c = NL_TCOL[mm["T"]]
+        a.semilogy(mm["deficit"], mm["chi_peak"], NL_MARK[mm["Lx"]], color=c, ms=7,
+                   mfc=c if mm["cool"] == "cie" else "none")
+    a.axhline(300, color=INK2, lw=1.2, ls="--")
+    a.set_xlabel(r"max pressure deficit $1-p_{\min}/p_{\rm hot}$ (t ≤ 1.5 t$_{cool}$)")
+    a.set_ylabel("peak cold / hot density")
+    a.set_title("Contrast vs pressure deficit (filled: CIE, open: UV)")
+    save(fig, "figP_nonlinear.png")
+    print("%-5s %-8s %5s %5s %8s %8s %8s %6s %6s %6s %6s" % ("cool", "T", "Lx", "A", "chi_pk", "t_pk",
+          "chi_lt", "cells", "ncold", "defic", "fcold"))
+    for mm in sorted(M, key=lambda q: (q["cool"], q["T"], q["Lx"], q["A"])):
+        print("%-5s %-8.0e %5g %5g %8.1f %8.2f %8.1f %6d %6d %6.2f %6.2f" % (
+            mm["cool"], mm["T"], mm["Lx"], mm["A"], mm["chi_peak"], mm["t_peak"], mm["chi_late"],
+            mm["cells_peak"], mm["ncold_late"], mm["deficit"], mm["cold_frac"]))
+
+
 if __name__ == "__main__":
     import sys
     want = sys.argv[1:]

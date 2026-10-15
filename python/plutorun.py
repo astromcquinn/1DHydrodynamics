@@ -174,6 +174,40 @@ class Run:
         return res
 
     # ------------------------------------------------------------------
+    def _nonlinear_diag(self, rho, prs, T, trc, sel, dx, T_cold):
+        """Diagnostics of the nonlinear outcome at one output.
+
+        cold gas: cloud gas below T_cold = 2 T_eq (2 T_floor);
+        hot gas:  for clouds, the non-cooling ambient medium (tracer < 0.5) above
+                  0.5 T_bg; for the infinite medium, cells above half the current
+                  maximum temperature.
+        nl_rho_cold is the mass-weighted mean density of the cold gas, nl_ncold the
+        number of separate cold sheets, nl_cells_densest the width (in cells) of
+        the cold sheet that contains the densest cell."""
+        nan = float("nan")
+        if self.infinite:
+            hot = T > 0.5 * T.max()
+        else:
+            hot = (trc < 0.5) & (T > 0.5 * self.p["T_bg"])
+        cold = sel & (T < T_cold)
+        out = dict(nl_rho_max=float(rho[sel].max()), nl_mass=float(rho[sel].sum() * dx),
+                   nl_cold_mass=float(rho[cold].sum() * dx),
+                   nl_rho_hot=float(np.median(rho[hot])) if hot.any() else nan,
+                   nl_T_hot=float(np.median(T[hot])) if hot.any() else nan,
+                   nl_p_hot=float(np.median(prs[hot])) if hot.any() else nan,
+                   nl_p_min=float(prs[sel].min()))
+        if cold.any():
+            out["nl_rho_cold"] = float(np.sum(rho[cold] ** 2) / np.sum(rho[cold]))
+            edges = np.diff(np.concatenate([[0], cold.astype(int), [0]]))
+            starts, ends = np.nonzero(edges == 1)[0], np.nonzero(edges == -1)[0]
+            out["nl_ncold"] = len(starts)
+            imax = np.argmax(np.where(cold, rho, -1.0))
+            j = np.nonzero((starts <= imax) & (ends > imax))[0]
+            out["nl_cells_densest"] = int(ends[j[0]] - starts[j[0]]) if len(j) else 0
+        else:
+            out.update(nl_rho_cold=nan, nl_ncold=0, nl_cells_densest=0)
+        return out
+
     def analyse(self, d):
         nx = self.p["nx"]
         times = []
@@ -184,11 +218,15 @@ class Run:
         dx = self.p["box"] / nx
         keys = ["t", "Tmean", "pmean", "nmean", "amp_mode", "amp_mode_p",
                 "amp_mode_T", "amp_mode_K", "amp_mode_v", "amp_mode_Z",
-                "amp_h2", "amp_max", "amp_rms", "size", "nmax_over_nmean"]
+                "amp_h2", "amp_max", "amp_rms", "size", "nmax_over_nmean",
+                # nonlinear outcome (see _nonlinear_diag)
+                "nl_rho_max", "nl_rho_cold", "nl_rho_hot", "nl_T_hot", "nl_p_hot",
+                "nl_p_min", "nl_mass", "nl_cold_mass", "nl_ncold", "nl_cells_densest"]
         g = C.GAMMA
         cs0 = np.sqrt(g * C.kB * self.p["T_bg"] / self.p["chi"] / (C.MU * C.amu)) / C.UNIT_V
         ts = {k: [] for k in keys}
-        prof_idx = np.unique(np.linspace(0, len(times) - 1, 12).astype(int))
+        prof_idx = np.unique(np.linspace(0, len(times) - 1, 24).astype(int))
+        T_cold = 2.0 * self.model.T_eq(self.p["chi"] * self.p["rho_bg"] * C.mp)
         profiles = []
         lam = self.p["lam"]
         rho_c0 = self.p["chi"] * self.p["rho_bg"]
@@ -251,6 +289,8 @@ class Run:
             ts["size"].append(sel.sum() * dx)
             # max over the whole cloud, edges included (for comparison)
             ts["nmax_over_nmean"].append(rho[sel].max() / nmean - 1)
+            for k, v in self._nonlinear_diag(rho, prs, T, trc, sel, dx, T_cold).items():
+                ts[k].append(v)
             if i in prof_idx:
                 profiles.append(np.vstack([rho, prs, T, trc, vx]).astype(np.float32))
         out = {k: np.array(v) for k, v in ts.items()}
