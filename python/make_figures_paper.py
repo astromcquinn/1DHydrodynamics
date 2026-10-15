@@ -401,7 +401,9 @@ def nl_end_state(d):
 
 
 def fig_nonlinear():
-    R = [d for d in runs("nonlinear") if d["params"]["L_cloud"] > 0]
+    # L <= c_s t_cool: the 4 t_cool runs; L = 3, 10 c_s t_cool: the 15 t_cool runs
+    R = [d for d in runs("nonlinear") if 0 < d["params"]["L_cloud"] < 2 * d["cs_tcool0"]]
+    R += runs("nonlinear_long")
     if not R:
         return
     fig, ax = plt.subplots(1, 3, figsize=(15, 4.4))
@@ -415,7 +417,8 @@ def fig_nonlinear():
         fill = c if mm["cool"] == "cie" else "none"
         # (a) late contrast vs T_hot/T_cold
         if np.isfinite(mm["T_ratio"]):
-            ax[0].loglog(mm["T_ratio"], mm["chi_late"], mk, color=c, ms=7, mfc=fill)
+            ax[0].loglog(mm["T_ratio"], mm["chi_late"], mk, color=c, ms=7, mfc=fill,
+                         alpha=1.0 if mm["cells"] >= 10 else 0.35)
         # (b) peak contrast vs pressure deficit
         ax[1].semilogy(mm["deficit"], mm["chi_peak"], mk, color=c, ms=7, mfc=fill,
                        alpha=1.0 if mm["cells_peak"] >= 10 else 0.45)
@@ -424,33 +427,38 @@ def fig_nonlinear():
     for a in ax[:2]:
         a.axhline(300, color=INK2, lw=1.2, ls=":")
     ax[0].text(2.3, 340, "χ$_f$ ≈ 300 (Gronke & Oh 2020)", fontsize=8, color=INK2)
-    ax[0].set_xlabel("T$_{hot}$ / T$_{cold}$ at the end (4 t$_{cool}$)")
+    ax[0].set_xlabel("T$_{hot}$ / T$_{cold}$ at the end (4 or 15 t$_{cool}$)")
     ax[0].set_ylabel("cold / hot density at the end")
-    ax[0].set_title("End state: pressure balance sets the contrast")
-    ax[0].legend(fontsize=7.5, loc="lower right")
+    ax[0].set_title("End state (faint: < 10 cells)")
     ax[1].set_xlabel(r"max pressure deficit 1 − p$_{min}$/p$_{hot}$ (t ≤ 1.5 t$_{cool}$)")
     ax[1].set_ylabel("peak cold / hot density")
     ax[1].set_title("Transient overshoot (faint: < 10 cells)")
-    # (c) histories, L = c_s t_cool, A = 0.1, CIE
+    # (c) resolution: 4096 (dashed) vs 16384 cells (solid), CIE, A = 0.1
     a = ax[2]
-    for d in R:
+    for d in runs("nonlinear_res"):
         p = d["params"]
-        if p["cooling"] != "cie" or p["amp"] != 0.1 or abs(p["L_cloud"] / d["cs_tcool0"] - 1) > 0.05:
+        base = os.path.join(RES, "runs", "nonlinear", p["name"].replace("_nx16384", "") + ".npz")
+        Lx = p["L_cloud"] / d["cs_tcool0"]
+        if not os.path.exists(base) or (p["T_bg"] < 2e6 and Lx < 0.5) or (p["T_bg"] > 2e6 and Lx > 0.5):
             continue
-        t = d["t"] / tc(d)
-        chi = np.asarray(d["nl_rho_cold"]) / np.asarray(d["nl_rho_hot"])
-        a.semilogy(t, chi, color=NL_TCOL[p["T_bg"]], lw=1.6)
-        a.axhline(p["T_bg"] / 7e3, color=NL_TCOL[p["T_bg"]], lw=0.8, ls="--")
+        for dd, ls in [(P.load(base), "--"), (d, "-")]:
+            t = dd["t"] / tc(dd)
+            chi = np.asarray(dd["nl_rho_cold"]) / np.asarray(dd["nl_rho_hot"])
+            a.semilogy(t, chi, color=NL_TCOL[p["T_bg"]], lw=1.5, ls=ls,
+                       label=(f"T$_{{hot}}$ = {p['T_bg']:.0e} K, L = {Lx:.1g} c$_s$t$_{{cool}}$"
+                              if ls == "-" else None))
     a.axhline(300, color=INK2, lw=1.2, ls=":")
     a.set_xlabel("t / t$_{cool}$")
     a.set_ylabel("cold / hot density")
-    a.set_title("L = c$_s$t$_{cool}$, A = 0.1, CIE (dashed: T$_{hot}$/7000 K)")
-    a.set_ylim(1, 1e4)
+    a.set_title("Resolution: 4096 (dashed) vs 16384 cells (solid)")
+    a.set_ylim(1, 2e4)
+    a.legend(fontsize=7.5, loc="lower right")
     h = [Line2D([], [], color=c, marker="o", ls="none", label=f"T$_{{hot}}$ = {T:.0e} K") for T, c in NL_TCOL.items()]
     h += [Line2D([], [], color=INK2, marker=m, ls="none", label=f"L/c$_s$t$_{{cool}}$ = {Lx:g}") for Lx, m in NL_MARK.items()]
     h += [Line2D([], [], color=INK2, marker="o", ls="none", label="CIE"),
           Line2D([], [], color=INK2, marker="o", mfc="none", ls="none", label="UV background")]
-    ax[1].legend(handles=h, fontsize=7, loc="lower left", ncol=2)
+    ax[0].legend(handles=h + [Line2D([], [], color=INK2, ls="--", label="χ = T$_{hot}$/T$_{cold}$")],
+                 fontsize=6.8, loc="upper left", ncol=2)
     save(fig, "figP_nonlinear.png")
     print("%-5s %-7s %4s %5s %8s %8s %8s %7s %6s %6s %6s" % ("cool", "T", "Lx", "A", "chi_pk", "chi_end",
           "T_ratio", "p_ratio", "cells", "defic", "fcold"))

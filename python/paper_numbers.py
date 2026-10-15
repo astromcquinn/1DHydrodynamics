@@ -224,7 +224,23 @@ def runaway():
         print(f"t_ff (v_c=200 km/s) at {r} kpc: {np.sqrt(2) * r * C.kpc / 200e5 / C.Myr:.0f} Myr")
 
 
-SECTIONS = dict(runaway=runaway, long_time=long_time, heated_table=heated_table, isobaric_validity=isobaric_validity,
+def nonlinear():
+    """Section 'Nonlinear outcome': end-state contrast vs T_hot/T_cold, overshoot,
+    resolution check, large clouds."""
+    from make_figures_paper import nl_metrics, nl_end_state
+    header("Nonlinear outcome (cold / hot density)")
+    sets = [d for d in runs("nonlinear") if 0 < d["params"]["L_cloud"] < 2 * d["cs_tcool0"]]
+    sets += runs("nonlinear_long", "nonlinear_res")
+    for d in sets:
+        p = d["params"]
+        m = nl_metrics(d)
+        m.update(nl_end_state(d))
+        print(f"{p['name']:38s} nx={p['nx']:5d} peak={m['chi_peak']:7.0f} end={m['chi_late']:7.0f}"
+              f" T_hot/T_cold={m['T_ratio']:6.0f} T_cold={m['T_cold']:7.0f} p_cold/p_hot={m['p_ratio']:5.2f}"
+              f" cells={m['cells']:5d} deficit={m['deficit']:.2f} cold/initial mass={m['cold_frac']:.2f}")
+
+
+SECTIONS = dict(nonlinear=nonlinear, runaway=runaway, long_time=long_time, heated_table=heated_table, isobaric_validity=isobaric_validity,
                 thresholds=thresholds, clouds=clouds, isochoric=isochoric, uv_vs_cie=uv_vs_cie,
                 amplitude_resolution=amplitude_resolution, small_cloud_history=small_cloud_history,
                 seeds=seeds, conduction=conduction)
