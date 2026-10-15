@@ -65,6 +65,18 @@ papers. Quotes are verbatim.
   - Shattering requires a final contrast χ_f ≳ 300 and δP/P ~ 1. It happens even for initially linear contrasts (χ_i = 1.01).
   - It has the same loss of sonic contact as our small clouds.
 
+## Cooling flows in galaxy haloes
+- **Stern, Fielding, Faucher-Giguère & Quataert 2020, MNRAS 492, 6042 (R, §2–3).**
+  This is Paper II; Paper I is Stern et al. 2019, MNRAS 488, 2549 (not read).
+  - Steady CGM cooling flows using the Wiersma et al. tables with the HM12 UV background.
+  - In the subsonic part, "radiative cooling is balanced via heating by compression
+    as the gas flows inwards", and T ≈ T_vir.
+  - The sonic point is at t_cool/t_ff ≈ 0.7. Inside it the cooling runs away: T falls
+    by more than 10× over about 2× in radius.
+  - 3D Athena run seeded with 3% isobaric perturbations: the perturbations grow
+    significantly only inside the sonic radius, where t_cool ≪ r/v_r.
+  - Cited in the draft's applicability subsection (`sec:gravity`).
+
 ## Not yet read (possibly relevant)
 Goldsmith 1970, 1972; Defouw 1970; David & Bregman 1989; Kovalenko & Shchekinov
 1999; Meerson & Sasorov 1987; McCray, Stein & Kafatos 1975; Loewenstein 1989.
