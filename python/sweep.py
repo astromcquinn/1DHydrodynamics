@@ -308,7 +308,15 @@ def nonlinear_res_runs():
             and any(f"_Lx{s}_" in kw["name"] for s in ("0p3", "1"))]
 
 
-SWEEPS = dict(nonlinear=nonlinear_runs, nonlinear_res=nonlinear_res_runs, chi1=chi1_runs, chi1_large=chi1_large_runs, chi1_amplitude=chi1_amplitude_runs,
+def nonlinear_long_runs():
+    """Large clouds of the nonlinear sweep (L/(c_s t_cool) = 3, 10), run to 15 t_cool
+    so that the hot gas has time to crush them."""
+    return [dict(kw, tstop_factor=15.0, nout=500, name=kw["name"] + "_long")
+            for kw in nonlinear_runs()
+            if kw["L_cloud"] > 0 and any(f"_Lx{s}_" in kw["name"] for s in ("3", "10"))]
+
+
+SWEEPS = dict(nonlinear=nonlinear_runs, nonlinear_long=nonlinear_long_runs, nonlinear_res=nonlinear_res_runs, chi1=chi1_runs, chi1_large=chi1_large_runs, chi1_amplitude=chi1_amplitude_runs,
               chi1_resolution=chi1_resolution_runs, chi1_pert=chi1_pert_runs, chi1_pert_big=chi1_pert_big_runs,
               chi1_scaling=chi1_scaling_runs, longval=longval_runs, pert_infinite=pert_infinite_runs, pert_cloud=pert_cloud_runs,
               infinite_uvb=infinite_uvb_runs, cloud_uvb=cloud_uvb_runs,

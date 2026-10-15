@@ -384,55 +384,80 @@ def nl_metrics(d):
                 deficit=np.nanmax(defic[t <= 1.5]))
 
 
+def nl_end_state(d):
+    """Mass-weighted T and p of the cold cloud gas in the last stored profile, and
+    the median T and p of the hot ambient gas."""
+    p = d["params"]
+    rho, prs, T, trc = d["profiles"][-1][:4]
+    T_cold_thr = 2.0 * (1.3e4 if p["cooling"] == "pie" else 1e4)
+    cold = (trc > 0.5) & (T < T_cold_thr)
+    hot = (trc < 0.5) & (T > 0.5 * p["T_bg"])
+    if not cold.any() or not hot.any():
+        return dict(T_cold=np.nan, p_ratio=np.nan, T_ratio=np.nan, cells=0)
+    Tc = np.sum(T[cold] * rho[cold]) / np.sum(rho[cold])
+    pc = np.sum(prs[cold] * rho[cold]) / np.sum(rho[cold])
+    return dict(T_cold=Tc, p_ratio=pc / np.median(prs[hot]), T_ratio=np.median(T[hot]) / Tc,
+                cells=int(cold.sum()))
+
+
 def fig_nonlinear():
     R = [d for d in runs("nonlinear") if d["params"]["L_cloud"] > 0]
     if not R:
         return
-    M = [nl_metrics(d) for d in R]
-    fig, ax = plt.subplots(1, 3, figsize=(15, 4.3))
-    for col, cool, title in [(0, "cie", "CIE + 10$^4$ K floor"), (1, "pie", "UV background")]:
-        a = ax[col]
-        for mm in M:
-            if mm["cool"] != cool:
-                continue
-            c = NL_TCOL[mm["T"]]
-            jit = {0.3: 0.85, 1.0: 0.95, 3.0: 1.05, 10.0: 1.15}[mm["Lx"]]
-            a.loglog(mm["A"] * jit, mm["chi_peak"], NL_MARK[mm["Lx"]], color=c, ms=7)
-            a.loglog(mm["A"] * jit, mm["chi_late"], NL_MARK[mm["Lx"]], color=c, ms=7, mfc="none")
-        for T, c in NL_TCOL.items():
-            a.axhline(T / 1e4, color=c, lw=0.8, ls=":")
-        a.axhline(300, color=INK2, lw=1.2, ls="--")
-        a.text(0.026, 330, "Gronke & Oh χ$_f$ ≈ 300", fontsize=8, color=INK2)
-        a.set_xlabel("seed amplitude A")
-        a.set_title(title)
-        a.set_ylim(1, 3e4)
-    ax[0].set_ylabel(r"cold / hot density, $\langle\rho_{\rm cold}\rangle/\rho_{\rm hot}$")
-    h = [Line2D([], [], color=c, marker="o", ls="none", label=f"T$_{{hot}}$ = {T:.0e} K")
-         for T, c in NL_TCOL.items()]
-    h += [Line2D([], [], color=INK2, marker=m, ls="none", label=f"L/c$_s$t$_{{cool}}$ = {Lx:g}")
-          for Lx, m in NL_MARK.items()]
-    h += [Line2D([], [], color=INK2, marker="o", ls="none", label="peak"),
-          Line2D([], [], color=INK2, marker="o", mfc="none", ls="none", label="late (last 20%)"),
-          Line2D([], [], color=INK2, ls=":", label="T$_{hot}$/10$^4$ K")]
-    ax[1].legend(handles=h, fontsize=7, loc="upper left", ncol=2)
-    # pressure deficit vs late contrast
-    a = ax[2]
-    for mm in M:
+    fig, ax = plt.subplots(1, 3, figsize=(15, 4.4))
+    rows = []
+    for d in R:
+        mm = nl_metrics(d)
+        mm.update(nl_end_state(d))
+        rows.append(mm)
         c = NL_TCOL[mm["T"]]
-        a.semilogy(mm["deficit"], mm["chi_peak"], NL_MARK[mm["Lx"]], color=c, ms=7,
-                   mfc=c if mm["cool"] == "cie" else "none")
-    a.axhline(300, color=INK2, lw=1.2, ls="--")
-    a.set_xlabel(r"max pressure deficit $1-p_{\min}/p_{\rm hot}$ (t ≤ 1.5 t$_{cool}$)")
-    a.set_ylabel("peak cold / hot density")
-    a.set_title("Contrast vs pressure deficit (filled: CIE, open: UV)")
+        mk = NL_MARK[mm["Lx"]]
+        fill = c if mm["cool"] == "cie" else "none"
+        # (a) late contrast vs T_hot/T_cold
+        if np.isfinite(mm["T_ratio"]):
+            ax[0].loglog(mm["T_ratio"], mm["chi_late"], mk, color=c, ms=7, mfc=fill)
+        # (b) peak contrast vs pressure deficit
+        ax[1].semilogy(mm["deficit"], mm["chi_peak"], mk, color=c, ms=7, mfc=fill,
+                       alpha=1.0 if mm["cells_peak"] >= 10 else 0.45)
+    lim = [2, 1e4]
+    ax[0].plot(lim, lim, color=INK2, lw=0.8, ls="--", label="pressure balance: χ = T$_{hot}$/T$_{cold}$")
+    for a in ax[:2]:
+        a.axhline(300, color=INK2, lw=1.2, ls=":")
+    ax[0].text(2.3, 340, "χ$_f$ ≈ 300 (Gronke & Oh 2020)", fontsize=8, color=INK2)
+    ax[0].set_xlabel("T$_{hot}$ / T$_{cold}$ at the end (4 t$_{cool}$)")
+    ax[0].set_ylabel("cold / hot density at the end")
+    ax[0].set_title("End state: pressure balance sets the contrast")
+    ax[0].legend(fontsize=7.5, loc="lower right")
+    ax[1].set_xlabel(r"max pressure deficit 1 − p$_{min}$/p$_{hot}$ (t ≤ 1.5 t$_{cool}$)")
+    ax[1].set_ylabel("peak cold / hot density")
+    ax[1].set_title("Transient overshoot (faint: < 10 cells)")
+    # (c) histories, L = c_s t_cool, A = 0.1, CIE
+    a = ax[2]
+    for d in R:
+        p = d["params"]
+        if p["cooling"] != "cie" or p["amp"] != 0.1 or abs(p["L_cloud"] / d["cs_tcool0"] - 1) > 0.05:
+            continue
+        t = d["t"] / tc(d)
+        chi = np.asarray(d["nl_rho_cold"]) / np.asarray(d["nl_rho_hot"])
+        a.semilogy(t, chi, color=NL_TCOL[p["T_bg"]], lw=1.6)
+        a.axhline(p["T_bg"] / 7e3, color=NL_TCOL[p["T_bg"]], lw=0.8, ls="--")
+    a.axhline(300, color=INK2, lw=1.2, ls=":")
+    a.set_xlabel("t / t$_{cool}$")
+    a.set_ylabel("cold / hot density")
+    a.set_title("L = c$_s$t$_{cool}$, A = 0.1, CIE (dashed: T$_{hot}$/7000 K)")
+    a.set_ylim(1, 1e4)
+    h = [Line2D([], [], color=c, marker="o", ls="none", label=f"T$_{{hot}}$ = {T:.0e} K") for T, c in NL_TCOL.items()]
+    h += [Line2D([], [], color=INK2, marker=m, ls="none", label=f"L/c$_s$t$_{{cool}}$ = {Lx:g}") for Lx, m in NL_MARK.items()]
+    h += [Line2D([], [], color=INK2, marker="o", ls="none", label="CIE"),
+          Line2D([], [], color=INK2, marker="o", mfc="none", ls="none", label="UV background")]
+    ax[1].legend(handles=h, fontsize=7, loc="lower left", ncol=2)
     save(fig, "figP_nonlinear.png")
-    print("%-5s %-8s %5s %5s %8s %8s %8s %6s %6s %6s %6s" % ("cool", "T", "Lx", "A", "chi_pk", "t_pk",
-          "chi_lt", "cells", "ncold", "defic", "fcold"))
-    for mm in sorted(M, key=lambda q: (q["cool"], q["T"], q["Lx"], q["A"])):
-        print("%-5s %-8.0e %5g %5g %8.1f %8.2f %8.1f %6d %6d %6.2f %6.2f" % (
-            mm["cool"], mm["T"], mm["Lx"], mm["A"], mm["chi_peak"], mm["t_peak"], mm["chi_late"],
-            mm["cells_peak"], mm["ncold_late"], mm["deficit"], mm["cold_frac"]))
-
+    print("%-5s %-7s %4s %5s %8s %8s %8s %7s %6s %6s %6s" % ("cool", "T", "Lx", "A", "chi_pk", "chi_end",
+          "T_ratio", "p_ratio", "cells", "defic", "fcold"))
+    for mm in sorted(rows, key=lambda q: (q["cool"], q["T"], q["Lx"], q["A"])):
+        print("%-5s %-7.0e %4g %5g %8.0f %8.0f %8.0f %7.2f %6d %6.2f %6.2f" % (
+            mm["cool"], mm["T"], mm["Lx"], mm["A"], mm["chi_peak"], mm["chi_late"], mm["T_ratio"],
+            mm["p_ratio"], mm["cells"], mm["deficit"], mm["cold_frac"]))
 
 if __name__ == "__main__":
     import sys
