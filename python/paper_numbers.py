@@ -203,7 +203,28 @@ def conduction():
               f"x_kappa={lamk / cst:.3g}")
 
 
-SECTIONS = dict(long_time=long_time, heated_table=heated_table, isobaric_validity=isobaric_validity,
+def runaway():
+    """Discussion, Table 'runaway': where t_cool(T) drops below t_ff, and the
+    short-wavelength amplification left from there to 1.5e4 K."""
+    header("Runaway cooling (Table 'runaway')")
+    tab = C.CoolingTable.for_Z(0.3)
+    T = np.logspace(np.log10(1.5e4), 6, 4000)
+    F = lambda Tx, Tf: (Tx / Tf) ** 2 * tab(Tf) / tab(Tx)
+    for R in [3, 10, 30, 100]:
+        out = []
+        for tc_T, beta in [(T / tab(T), 1 / C.GAMMA), (T**2 / tab(T), 1.0)]:
+            tc_T = tc_T / tc_T[-1]
+            Tx = T[tc_T <= 1.0 / R].max()
+            out.append(f"T_x={Tx:.2g} K amp={F(Tx, 1.5e4) ** beta:.0f}")
+        print(f"t_cool0/t_ff={R}: isochoric {out[0]};  isobaric {out[1]}")
+    for cool in ["cie", "pie"]:
+        m = CM.make_model(cool, 0.3)
+        print(cool, "time to cool [Myr]:", [round(LT.t_cool_end(n, 1e6, m)) for n in (1e-4, 1e-3, 1e-2)])
+    for r in [50, 100, 200]:
+        print(f"t_ff (v_c=200 km/s) at {r} kpc: {np.sqrt(2) * r * C.kpc / 200e5 / C.Myr:.0f} Myr")
+
+
+SECTIONS = dict(runaway=runaway, long_time=long_time, heated_table=heated_table, isobaric_validity=isobaric_validity,
                 thresholds=thresholds, clouds=clouds, isochoric=isochoric, uv_vs_cie=uv_vs_cie,
                 amplitude_resolution=amplitude_resolution, small_cloud_history=small_cloud_history,
                 seeds=seeds, conduction=conduction)
