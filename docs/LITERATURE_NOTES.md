@@ -51,6 +51,13 @@ papers. Quotes are verbatim.
 - **Mohapatra et al. 2023, MNRAS 525, 3831.** Criterion min[t_ti/min(t_mix, t_ff)] ≲ 1.8 exp(6σ_s). Isochoric gas at 10^5.5–10^6 K, where t_cool < t_cs.
 - **Balbus & Soker 1989, ApJ 341, 611.**
   - In cooling flows, buoyancy and advection limit linear growth to modest power laws (×2–3 for oscillatory modes).
+    - In their cluster model, non-radial (buoyant) modes grow "a factor of at most 2 or 3"
+      in δρ/ρ from 100 to 10 kpc. WKBJ scaling: δρ/ρ ∝ r^-1/2 in an isothermal potential.
+    - Only nearly radial (shell-like) wavevectors grow as power laws (the Mathews & Bregman
+      solution). They argue mode coupling into stable oscillations probably limits these.
+    - In transonic accretion (M ≳ 0.3–0.5) the overstability fades, and a wider but still
+      limited range of wavevectors grows.
+    - They suggest filaments come from initially nonlinear inhomogeneities, not linear growth.
   - Eulerian frozen-background growth rates miss amplitude changes.
 - **Waters & Proga 2019, ApJ 875, 158.**
   - Classification of non-isobaric linear regimes for heated photoionized gas, including gas off the equilibrium curve.
@@ -71,7 +78,12 @@ papers. Quotes are verbatim.
   cooling flows with t_cool > t_ff, isobaric seeds of 10% rms decay within about
   t_ff and saturate at δρ/ρ ≈ t_ff/t_cool. "Cooling flows do not develop into a
   multiphase CGM, as long as tcool > tff". Large seeds (e.g. satellite wakes) can
-  persist.
+  persist. Seeds of 0.3 give almost the same final amplitude as 0.1; seeds of 0.01 end
+  with δρ/ρ ≪ t_ff/t_cool (checked on the rendered PDF page), so t_ff/t_cool is a cap,
+  not an attractor.
+  - In the self-similar subsonic solution v_r = r/t_cool, so the Mach number is
+    r/(c_s t_cool): the sonic point is where a region of size r loses pressure balance
+    as it cools, the analogue of our clouds at L ≈ c_s t_cool.
   - Steady CGM cooling flows using the Wiersma et al. tables with the HM12 UV background.
   - In the subsonic part, "radiative cooling is balanced via heating by compression
     as the gas flows inwards", and T ≈ T_vir.
