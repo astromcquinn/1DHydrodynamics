@@ -67,7 +67,11 @@ papers. Quotes are verbatim.
 
 ## Cooling flows in galaxy haloes
 - **Stern, Fielding, Faucher-Giguère & Quataert 2020, MNRAS 492, 6042 (R, §2–3).**
-  This is Paper II; Paper I is Stern et al. 2019, MNRAS 488, 2549 (not read).
+  This is Paper II. Paper I is Stern et al. 2019, MNRAS 488, 2549 (R, §3–5): in 3D
+  cooling flows with t_cool > t_ff, isobaric seeds of 10% rms decay within about
+  t_ff and saturate at δρ/ρ ≈ t_ff/t_cool. "Cooling flows do not develop into a
+  multiphase CGM, as long as tcool > tff". Large seeds (e.g. satellite wakes) can
+  persist.
   - Steady CGM cooling flows using the Wiersma et al. tables with the HM12 UV background.
   - In the subsonic part, "radiative cooling is balanced via heating by compression
     as the gas flows inwards", and T ≈ T_vir.
