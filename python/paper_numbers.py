@@ -252,10 +252,109 @@ def nonlinear():
               f" cells={m['cells']:5d} deficit={m['deficit']:.2f} cold/initial mass={m['cold_frac']:.2f}")
 
 
+def dT_peaks():
+    """Sec. 'The temperature goes nonlinear first': peak |dT/T|/A over 0-3 t_cool for
+    the three cooling models (the floor gives 230-300, the UV background 40-170)."""
+    header("Peak temperature perturbation by cooling model (Sec. 'temperature goes nonlinear first')")
+    for cool, dens in [("cie", [1e-2]), ("ciecl", [1e-2]), ("pie", [1e-4, 1e-3, 1e-2])]:
+        m = CM.make_model(cool, 0.3)
+        for n in dens:
+            tf = LT.t_cool_end(n, 1e6, m)
+            ref = LT.integrate(n, 1e6, 1.0, model=m, amp=0.0, stop_factor=LT.T_END_FACTOR)
+            row = []
+            for x in [0.03, 0.1, 1, 10]:
+                o = LT.integrate(n, 1e6, x * ref["cs_tcool0_kpc"], model=m, amp=1.0, Tstop=0,
+                                 t_end=3 * tf * C.Myr, t_out=np.linspace(0, 3 * tf, 6001))
+                dT = np.abs(o["dT"])
+                row.append(f"x={x}: {dT.max():.0f} (A_min={1 / dT.max():.2g})")
+            print(f"{cool:5s} n={n:g}: " + "; ".join(row))
+
+
+def dT_validation():
+    """Sec. 'Validation': simulated vs linear dT/T at the stored outputs (A <= 1e-3
+    density seeds), and the sampled maximum against the true linear peak."""
+    header("Temperature perturbation in simulations vs linear theory (Sec. 'Validation')")
+    for d in runs("longval", "pert_infinite"):
+        p = d["params"]
+        if p.get("pert", "density") != "density" or p["amp"] > 1.1e-3:
+            continue
+        m = CM.make_model(p.get("cooling", "cie"), p["Z"])
+        tf, t = tc(d), d["t"]
+        k = (t > 0) & (t <= 1.3 * tf)
+        o = LT.integrate(p["rho_bg"], p["T_bg"], p["lam"], model=m, amp=p["amp"], Tstop=0,
+                         t_end=1.3 * tf * C.Myr, t_out=t[k])
+        sim, lt = np.abs(d["amp_mode_T"][k]), np.abs(o["dT"][:k.sum()])
+        big = lt > 0.05 * lt.max()
+        fine = LT.integrate(p["rho_bg"], p["T_bg"], p["lam"], model=m, amp=1.0, Tstop=0,
+                            t_end=1.3 * tf * C.Myr, t_out=np.linspace(0, 1.3 * tf, 4001))
+        print(f"{p['name']:34s} output step {np.median(np.diff(t[k])) / tf:.3f} t_cool  "
+              f"max rel. error {np.max(np.abs(sim[big] / lt[big] - 1)):.3f}  "
+              f"sampled/true peak {sim.max() / p['amp'] / np.abs(fine['dT']).max():.2f}")
+
+
+def long_time_peaks():
+    """Sec. 'After cooling': time and size of the post-cooling maximum, and late values."""
+    header("Post-cooling maxima (Sec. 'After cooling')")
+    for cool, n in [("cie", 1e-2), ("pie", 1e-3)]:
+        m = CM.make_model(cool, 0.3)
+        tf = LT.t_cool_end(n, 1e6, m)
+        ref = LT.integrate(n, 1e6, 1.0, model=m, amp=0.0, stop_factor=LT.T_END_FACTOR)
+        for x in [0.1, 1, 10]:
+            t_out = np.concatenate([np.linspace(0, 3 * tf, 600)[:-1],
+                                    np.logspace(np.log10(3 * tf), np.log10(1000 * tf), 6000)])
+            o = LT.integrate(n, 1e6, x * ref["cs_tcool0_kpc"], model=m, amp=1.0, Tstop=0,
+                             t_end=1000 * tf * C.Myr, t_out=t_out)
+            s, t = np.abs(o["s"]), o["t"] / tf
+            env = {tt: s[(t > tt / 1.3) & (t <= tt)].max() for tt in [10, 20, 300, 1000]}
+            print(f"{cool} x={x:<4g} max {s.max():.3g} at {t[np.argmax(s)]:.1f} t_cool; "
+                  + " ".join(f"envelope({k})={v:.3g}" for k, v in env.items()))
+
+
+def nonlinear_balance():
+    """Sec. 'Nonlinear outcome': contrast / (T_hot/T_cold) for resolved runs in pressure
+    balance, and the runs that are not in balance."""
+    from make_figures_paper import nl_metrics, nl_end_state
+    header("Nonlinear runs: pressure balance (Sec. 'Nonlinear outcome')")
+    sets = [d for d in runs("nonlinear") if 0 < d["params"]["L_cloud"] < 2 * d["cs_tcool0"]]
+    sets += runs("nonlinear_long", "nonlinear_res")
+    for cool in ["cie", "pie"]:
+        ratios, off = [], []
+        for d in sets:
+            if d["params"]["cooling"] != cool:
+                continue
+            mm = nl_metrics(d)
+            mm.update(nl_end_state(d))
+            if not np.isfinite(mm["p_ratio"]):
+                off.append((d["params"]["name"], "no cold gas"))
+            elif abs(mm["p_ratio"] - 1) < 0.05 and mm["cells"] >= 10:
+                ratios.append(mm["chi_late"] / mm["T_ratio"])
+            else:
+                off.append((d["params"]["name"], f"p_cold/p_hot={mm['p_ratio']:.2f} cells={mm['cells']}"))
+        print(f"{cool}: {len(ratios)} balanced, resolved runs; contrast/(T_hot/T_cold) "
+              f"{min(ratios):.3f}-{max(ratios):.3f}")
+        for o in off:
+            print("   not balanced or unresolved:", *o)
+
+
+def metallicity():
+    """Sec. 'Amplification and threshold seeds': Z = 0.05 vs Z = 1 at fixed x."""
+    header("Metallicity dependence at fixed x (linear_maps.npz)")
+    m = dict(np.load(os.path.join(HERE, "..", "results", "linear_maps.npz")))
+    s = (m["bg"] == "isochoric") & (m["T0"] == 1e6)
+    for x in np.unique(m["x"][s]):
+        g = {Z: (m["G_max_cool"][s & (m["x"] == x) & (m["Z"] == Z)],
+                 m["G_3tf"][s & (m["x"] == x) & (m["Z"] == Z)]) for Z in (0.05, 1.0)}
+        if all(len(v[0]) for v in g.values()) and x < 20:
+            print(f"x={x:.3g}: G_cool Z=1/Z=0.05 = {g[1.0][0][0] / g[0.05][0][0]:.2f}, "
+                  f"G_3tc ratio = {g[1.0][1][0] / g[0.05][1][0]:.2f}")
+
+
 SECTIONS = dict(nonlinear=nonlinear, runaway=runaway, long_time=long_time, heated_table=heated_table, isobaric_validity=isobaric_validity,
                 thresholds=thresholds, clouds=clouds, isochoric=isochoric, uv_vs_cie=uv_vs_cie,
                 amplitude_resolution=amplitude_resolution, small_cloud_history=small_cloud_history,
-                seeds=seeds, conduction=conduction, sonic_vc=sonic_vc)
+                seeds=seeds, conduction=conduction, sonic_vc=sonic_vc, dT_peaks=dT_peaks,
+                dT_validation=dT_validation, long_time_peaks=long_time_peaks,
+                nonlinear_balance=nonlinear_balance, metallicity=metallicity)
 
 if __name__ == "__main__":
     for name in (sys.argv[1:] or SECTIONS):
