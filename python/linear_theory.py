@@ -160,6 +160,8 @@ def integrate(n0, T0, lam_kpc, Z=None, table=None, background="isochoric",
 
 
 T_END_FACTOR = 1.5   # cooling counts as finished once T < 1.5 T_eq (or floor)
+T_AFTER = 1.5        # "growth after cooling" is the maximum up to T_AFTER x t_cool
+                     # (t_cool = initial isochoric e-folding time, the time unit)
 
 
 def t_cool_end(n0, T0, model, background="isochoric", heat=0.0):

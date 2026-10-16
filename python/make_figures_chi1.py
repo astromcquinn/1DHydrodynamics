@@ -10,7 +10,7 @@ import os
 import numpy as np
 
 import plutorun as P
-from metrics import t_cool as tc
+from metrics import t_end as tc  # legacy script: old time unit (time to cool)
 from make_figures import FIG, RES, S1, S2, S3, S4, INK2, GRID, plt, save, cloud_metrics
 
 

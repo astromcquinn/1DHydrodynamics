@@ -13,7 +13,7 @@ import cooling as C
 import cooling_models as CM
 import linear_theory as LT
 import plutorun as P
-from metrics import t_cool as tc
+from metrics import t_cool as tc, t_end, T_AFTER
 from make_figures import FIG, RES, S1, S2, S3, S4, S5, INK2, GRID, plt, save
 
 PERTS = ["density", "temperature", "sound", "velocity", "metal"]
@@ -48,14 +48,14 @@ def fig_histories():
             ax[row, 1].plot(d["t"][::6] / tf, d["amp_mode_K"][::6] / 1e-3, "o", color=c, ms=3.5, mfc="none")
         for a in ax[row]:
             a.set_yscale("symlog", linthresh=1)
-            a.axvline(1, color=GRID, lw=1)
+            a.axvline(t_end(d) / tc(d), color=GRID, lw=1)
             a.axhline(0, color=INK2, lw=0.6)
         ax[row, 0].set_ylabel(r"$\delta\rho/\rho$ / A")
         ax[row, 1].set_ylabel(r"$\delta\ln K$ / A  (entropy)")
         ax[row, 0].set_title(fr"$\lambda = {x:g}\,c_s t_{{cool}}$: density response")
         ax[row, 1].set_title(fr"$\lambda = {x:g}\,c_s t_{{cool}}$: entropy perturbation")
     for a in ax[2]:
-        a.set_xlabel(r"t / t$_{cool}$  (gas reaches T$_{eq}$ at 1)")
+        a.set_xlabel(r"t / t$_{cool}$  (grey line: gas reaches 1.5 T$_{eq}$)")
     h, l = ax[0, 0].get_legend_handles_labels()
     fig.legend(h, l, loc="upper center", ncol=5, fontsize=8.5, bbox_to_anchor=(0.5, 0.965))
     fig.suptitle("Infinite medium, UV background, n = 10$^{-3}$, Z = 0.3, T$_0$ = 10$^6$ K: "
@@ -74,7 +74,7 @@ def fig_linear_survey():
     fig, ax = plt.subplots(2, 2, figsize=(11, 7.6), sharey=True, sharex=True)
     for row, cool in enumerate(["ciecl_z", "pie_z"]):
         for col, (key, ttl) in enumerate([("s_max_cool", "max while cooling"),
-                                          ("s_max", "max by 3 t$_{cool}$")]):
+                                          ("s_after", "max by 1.5 t$_{cool}$")]):
             a = ax[row, col]
             for pt in PERTS:
                 sel = (m["cooling"] == cool) & (m["pert"] == pt) & (m["bg"] == "isochoric")
@@ -106,10 +106,9 @@ def fig_clouds(sweep="pert_cloud", out="fig20_pert_clouds.png", keep=None):
                     p = d["params"]
                     if p["pert"] != pt or p["cooling"] != cool or p["rho_bg"] != nbg:
                         continue
-                    tf = tc(d)
-                    cool_ph = d["t"] <= tf
+                    cool_ph = d["t"] <= t_end(d)
                     gc = np.abs(d["amp_mode"][cool_ph]).max() / p["amp"]
-                    ge = np.abs(d["amp_mode"][d["t"] <= 2.5 * tf]).max() / p["amp"]
+                    ge = np.abs(d["amp_mode"][d["t"] <= T_AFTER * tc(d)]).max() / p["amp"]
                     xpos = i + (j - 0.5) * 0.28
                     a.semilogy([xpos, xpos], [max(gc, 1e-2), max(ge, 1e-2)], color=PCOL[pt], lw=1.2)
                     a.semilogy(xpos, max(gc, 1e-2), "o", color=PCOL[pt], ms=6,
@@ -128,7 +127,7 @@ def fig_clouds(sweep="pert_cloud", out="fig20_pert_clouds.png", keep=None):
     from matplotlib.lines import Line2D
     h = [Line2D([], [], color=INK2, marker="o", mfc="none", ls="none", label="max while cooling, CIE + floor"),
          Line2D([], [], color=INK2, marker="o", ls="none", label="max while cooling, UV background"),
-         Line2D([], [], color=INK2, marker="^", ls="none", label="max by 2.5 t$_{cool}$")]
+         Line2D([], [], color=INK2, marker="^", ls="none", label="max by 1.5 t$_{cool}$")]
     ax[1].legend(handles=h, fontsize=7.5, loc="upper right")
     save(fig, out)
 
@@ -148,7 +147,7 @@ def fig_nonlinear():
             a.loglog(pts[:, 0], np.maximum(pts[:, 1], 1e-3), "o-", color=PCOL[pt], ms=5, lw=1.2, label=PLAB[pt])
             a.loglog(pts[:, 0], np.maximum(pts[:, 2], 1e-3), "x:", color=PCOL[pt], ms=6, lw=0.9)
         a.set_xlabel(r"$\lambda_0/(c_s t_{cool})_0$")
-        a.set_title(f"{CLAB[cool]}, A = 0.1: max ρ/ρ̄ − 1 (o) and at 3 t$_{{cool}}$ (x)")
+        a.set_title(f"{CLAB[cool]}, A = 0.1: max ρ/ρ̄ − 1 (o) and at the end of the run (x)")
     ax[0].set_ylabel(r"max $\rho/\bar\rho - 1$")
     ax[0].legend(fontsize=8)
     save(fig, "fig21_pert_nonlinear.png")

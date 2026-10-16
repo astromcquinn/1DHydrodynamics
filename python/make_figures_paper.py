@@ -15,7 +15,7 @@ import cooling as C
 import cooling_models as CM
 import linear_theory as LT
 import plutorun as P
-from metrics import t_cool as tc
+from metrics import t_cool as tc, t_end, T_AFTER
 from sweep import _fmt
 from make_figures import (FIG, RES, S1, S2, S3, S4, S5, CAT, INK2, GRID, plt, save,
                           cloud_metrics)
@@ -30,19 +30,22 @@ def runs(*sweeps):
     return out
 
 
-def lt_long(cool, n, x, t_max):
-    """Linear theory for an infinite medium out to t_max (in units of t_cool)."""
+def lt_long(cool, n, x, t_max=None):
+    """Linear theory for an infinite medium out to t_max (in units of t_cool, the
+    initial e-folding time); t_max=None stops at the end of cooling (1.5 T_eq)."""
     m = CM.make_model(cool, 0.3)
-    tf = LT.t_cool_end(n, 1e6, m)
     ref = LT.integrate(n, 1e6, 1.0, model=m, background="isochoric", amp=0.0,
                        stop_factor=LT.T_END_FACTOR)
-    t_out = np.linspace(0, min(t_max, 3) * tf, 900)
-    if t_max > 3:
-        t_out = np.unique(np.concatenate([t_out, np.logspace(np.log10(3 * tf),
+    tf, te = ref["tcool0_Myr"], ref["t"][-1]
+    if t_max is None:
+        t_max = te / tf
+    t_out = np.linspace(0, min(t_max, 2) * tf, 900)
+    if t_max > 2:
+        t_out = np.unique(np.concatenate([t_out, np.logspace(np.log10(2 * tf),
                                                               np.log10(t_max * tf), 20000)]))
     o = LT.integrate(n, 1e6, x * ref["cs_tcool0_kpc"], model=m, background="isochoric",
                      amp=1.0, Tstop=0, t_end=t_max * tf * C.Myr, t_out=t_out)
-    o["tf"] = tf
+    o["tf"], o["te"] = tf, te
     return o
 
 
@@ -72,18 +75,19 @@ def fig_validation_long():
             # envelope over one cold-gas sound period
             cs_cold = C.cs_of(o["T"][-1]) / C.kpc * C.Myr        # kpc / Myr
             period = x * o["cs_tcool0_kpc"] / cs_cold / tf
-            env = envelope(t, o["s"], period)
+            t_e = o["te"] / tf                       # end of cooling, in t_cool
+            env = envelope(t, o["s"], period, t0=t_e)
             a.loglog(t, env, color=c, lw=1.8,
                      label=fr"$\lambda/c_st_{{cool}}$ = {x:g}")
             if os.path.exists(f):
                 d = P.load(f)
                 td = d["t"] / tc(d)
-                env_d = envelope(td, d["amp_mode"] / d["params"]["amp"], period)
+                env_d = envelope(td, d["amp_mode"] / d["params"]["amp"], period, t0=t_e)
                 pick = np.unique(np.searchsorted(td, np.logspace(-1, np.log10(td[-1]), 40)))
                 pick = pick[pick < len(td)]
                 a.loglog(td[pick], env_d[pick], "o", ms=4, mfc="none", color=c)
-        a.axvline(1, color=GRID, lw=1)
-        t_H = 13.8e3 / LT.t_cool_end(n, 1e6, CM.make_model(cool, 0.3))
+        a.axvline(t_e, color=GRID, lw=1)
+        t_H = 13.8e3 / tf
         a.axvline(t_H, color=INK2, lw=0.8, ls="--")
         a.text(t_H * 0.85, 0.015, "Hubble time", rotation=90, fontsize=7.5, color=INK2,
                ha="right", va="bottom")
@@ -92,21 +96,21 @@ def fig_validation_long():
         a.set_xlabel(r"t / t$_{cool}$")
         a.set_title(title)
     ax[0].set_ylabel(r"$|\delta\rho/\rho| / A_0$")
-    ax[0].legend(fontsize=8, loc="upper left")
+    ax[0].legend(fontsize=8, loc="lower left")
     h = [Line2D([], [], color=INK2, lw=1.8, label="linear theory"),
-         Line2D([], [], color=INK2, marker="o", mfc="none", ls="none", label="gPLUTO (to 200 t$_{cool}$)")]
-    ax[1].legend(handles=h, fontsize=8, loc="upper left")
+         Line2D([], [], color=INK2, marker="o", mfc="none", ls="none", label="gPLUTO")]
+    ax[1].legend(handles=h, fontsize=8, loc="lower left")
 
     # right: against background temperature while cooling, with the time-shift limit
     a = ax[2]
     tab = C.CoolingTable.for_Z(0.3)
     for c, x in zip([S1, S2, S3], [0.1, 1.0, 10.0]):
-        o = lt_long("cie", 1e-2, x, 1.0)
+        o = lt_long("cie", 1e-2, x)
         a.loglog(o["T"], np.abs(o["s"]), color=c, lw=1.8)
         f = os.path.join(RES, "runs", "longval", f"lv_cie_x{_fmt(x)}.npz")
         if os.path.exists(f):
             d = P.load(f)
-            k = d["t"] <= tc(d)
+            k = d["t"] <= t_end(d)
             a.loglog(d["Tmean"][k], np.abs(d["amp_mode"][k]) / d["params"]["amp"], "o",
                      ms=4, mfc="none", color=c)
     TT = np.logspace(np.log10(1.5e4), 6, 200)
@@ -138,7 +142,7 @@ def _lt_lines(a, cool, which):
     else:
         m = dict(np.load(os.path.join(RES, "linear_maps_uvb.npz")))
         base = (m["cooling"] == "pie") & (m["n0"] == 1e-3) & (m["Z"] == 0.3) & (m["T0"] == 1e6)
-    key = "G_max_cool" if which == "cool" else "G_2tf"
+    key = "G_max_cool" if which == "cool" else "G_after"
     for bg, ls, lab in [("isochoric", "--", "linear theory: infinite medium"),
                         ("isobaric", ":", "linear theory: small cloud (isobaric)")]:
         sel = base & (m["bg"] == bg)
@@ -176,7 +180,7 @@ def fig_chi1_clouds():
                 a.text(20, 1.3 / 0.02 * 1.15, r"$\delta\rho/\rho\approx1.3$ for A$_0$ = 0.02",
                        fontsize=7.5, color=INK2)
             a.set_title(f"{title}: " + ("max while cooling" if which == "cool"
-                                         else "max by 2.5 t$_{cool}$ (2 t$_{cool}$ for lines)"))
+                                         else "max by 1.5 t$_{cool}$"))
             if row == 1:
                 a.set_xlabel(r"$\lambda_0/(c_s t_{cool})_0$")
         ax[0, col].legend(fontsize=7.5, loc="lower left")
@@ -201,8 +205,7 @@ def fig_chi1_isochoric():
         mm = cloud_metrics(d)
         if mm["Lx"] < 1.5 or mm["x"] < 1.5:
             continue
-        tf = tc(d)
-        k = d["t"] <= 0.95 * tf
+        k = d["t"] <= 0.95 * t_end(d)
         A = d["params"]["amp"]
         c = S1 if d["params"]["cooling"] == "cie" else S2
         ax[0].loglog(mm["x"], np.abs(d["amp_mode_T"][k]).max() / A, "o", color=c, ms=5)
@@ -217,7 +220,7 @@ def fig_chi1_isochoric():
     ax[0].axhline(1, color=INK2, lw=0.8, ls="--")
     ax[0].set_ylabel(r"amplitude / A$_0$")
     ax[0].set_title("While cooling: δT/T grows (filled), δρ/ρ does not (open)")
-    ax[1].set_ylabel(r"$G-1$ by 2.5 t$_{cool}$")
+    ax[1].set_ylabel(r"$G-1$ by 1.5 t$_{cool}$")
     ax[1].set_title("Afterwards: density grows from the pressure imprint")
     for a in ax:
         a.set_xlabel(r"$\lambda_0/(c_s t_{cool})_0$")
@@ -281,10 +284,12 @@ def fig_chi1_amplitude():
                         a.semilogy(d["t"] / tf, np.maximum(d["amp_max"], 1e-4), color=c, lw=1.4,
                                    label=f"A$_0$ = {A:g}")
                         Lx = p["L_cloud"] / d["cs_tcool0"]
+                        t_e = t_end(d) / tc(d)
             if Lx is not None:
                 a.set_title(f"{lab}: n = {n:g} (L/c$_s$t$_{{cool}}$ = {Lx:.2g})")
             a.set_ylim(1e-4, 5e2)
-            a.axvline(1, color=GRID, lw=1)
+            if Lx is not None:
+                a.axvline(t_e, color=GRID, lw=1)
             if row == 1:
                 a.set_xlabel(r"t / t$_{cool}$")
         ax[row, 0].set_ylabel(r"interior max $\rho/\bar\rho - 1$")
@@ -304,7 +309,7 @@ def fig_chi1_resolution():
             if d is None:
                 continue
             tf = tc(d)
-            k = d["t"] <= 3 * tf
+            k = d["t"] <= 3 * t_end(d)
             a.semilogy(d["t"][k] / tf, np.maximum(d["amp_max"][k], 1e-4), color=c, lw=1.5,
                        label=f"{d['params']['nx']} cells ({d['params']['nx'] // 3} across the cloud)")
             Lx = d["params"]["L_cloud"] / d["cs_tcool0"]
@@ -334,7 +339,7 @@ def fig_chi1_uv_vs_cie():
         ax[1].loglog(mc["G_end"], mp["G_end"], "o", color=c, ms=5.5, mfc=c if ok else "none")
         if ok:
             ratios.append((mp["G_cool"] / mc["G_cool"], mp["G_end"] / mc["G_end"]))
-    for a, t in zip(ax, ["growth while cooling", "growth by 2.5 t$_{cool}$"]):
+    for a, t in zip(ax, ["growth while cooling", "growth by 1.5 t$_{cool}$"]):
         lim = [0.8, 3e3]
         a.plot(lim, lim, color=INK2, lw=0.8, ls="--")
         a.set_xlabel("CIE + floor")
@@ -345,7 +350,7 @@ def fig_chi1_uv_vs_cie():
     ax[0].legend(handles=h, fontsize=7.5)
     save(fig, "figP_chi1_uv_vs_cie.png")
     r = np.array(ratios)
-    for j, lab in enumerate(["cool", "2.5tc"]):
+    for j, lab in enumerate(["cool", "1.5tc"]):
         print("UV/CIE", lab, "N=%d median %.2f 10-90%% %.2f-%.2f" % (
             len(r), np.median(r[:, j]), *np.percentile(r[:, j], [10, 90])))
 
@@ -381,7 +386,7 @@ def nl_metrics(d):
                 cells_peak=int(np.asarray(d["nl_cells_densest"])[i]),
                 ncold_late=int(np.median(np.asarray(d["nl_ncold"])[late])) if late.any() else 0,
                 cold_frac=float(np.asarray(d["nl_cold_mass"])[-1] / np.asarray(d["nl_mass"])[0]),
-                deficit=np.nanmax(defic[t <= 1.5]))
+                deficit=np.nanmax(defic[d["t"] <= 1.5 * t_end(d)]))
 
 
 def nl_end_state(d):
@@ -401,7 +406,7 @@ def nl_end_state(d):
 
 
 def fig_nonlinear():
-    # L <= c_s t_cool: the 4 t_cool runs; L = 3, 10 c_s t_cool: the 15 t_cool runs
+    # L <= c_s t_cool: the short runs; L = 3, 10 c_s t_cool: the long runs
     R = [d for d in runs("nonlinear") if 0 < d["params"]["L_cloud"] < 2 * d["cs_tcool0"]]
     R += runs("nonlinear_long")
     if not R:
@@ -427,10 +432,10 @@ def fig_nonlinear():
     for a in ax[:2]:
         a.axhline(300, color=INK2, lw=1.2, ls=":")
     ax[0].text(2.3, 340, "χ$_f$ ≈ 300 (Gronke & Oh 2020)", fontsize=8, color=INK2)
-    ax[0].set_xlabel("T$_{hot}$ / T$_{cold}$ at the end (4 or 15 t$_{cool}$)")
+    ax[0].set_xlabel("T$_{hot}$ / T$_{cold}$ at the end of the run")
     ax[0].set_ylabel("cold / hot density at the end")
     ax[0].set_title("End state (faint: < 10 cells)")
-    ax[1].set_xlabel(r"max pressure deficit 1 − p$_{min}$/p$_{hot}$ (t ≤ 1.5 t$_{cool}$)")
+    ax[1].set_xlabel(r"max pressure deficit 1 − p$_{min}$/p$_{hot}$ (t ≤ 1.5 t$_{end}$)")
     ax[1].set_ylabel("peak cold / hot density")
     ax[1].set_title("Transient overshoot (faint: < 10 cells)")
     # (c) resolution: 4096 (dashed) vs 16384 cells (solid), CIE, A = 0.1

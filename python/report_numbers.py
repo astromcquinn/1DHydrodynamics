@@ -5,7 +5,7 @@ import os
 import numpy as np
 
 import plutorun as P
-from metrics import t_cool as tc
+from metrics import t_end as tc  # legacy script: old time unit (time to cool)
 from make_figures import cloud_metrics
 
 RES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "results")

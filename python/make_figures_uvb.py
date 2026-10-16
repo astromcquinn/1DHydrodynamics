@@ -13,7 +13,7 @@ import cooling as C
 import cooling_models as CM
 import linear_theory as LT
 import plutorun as P
-from metrics import t_cool as tc
+from metrics import t_cool as tc, t_end
 from make_figures import (FIG, RES, S1, S2, S3, S4, S5, INK2, GRID, plt, save,
                           cloud_metrics)
 
@@ -107,13 +107,13 @@ def fig_linear_uvb():
                        & (m["T0"] == T0) & (m["x"] <= xmax))
                 o = np.argsort(m["x"][sel])
                 a.loglog(m["x"][sel][o], m["G_max_cool"][sel][o], color=c, lw=1.6, label=lab)
-                a.loglog(m["x"][sel][o], m["G_3tf"][sel][o], color=c, lw=0.9, ls=":")
+                a.loglog(m["x"][sel][o], m["G_after"][sel][o], color=c, lw=0.9, ls=":")
             a.set_xlabel(r"$\lambda_0/(c_s t_{cool})_0$")
             a.set_title(("Infinite medium" if bg == "isochoric" else r"Small cloud ($L \ll c_s t_{cool}$)")
                         + f", Z = 0.3, T$_0$ = {T0:.0e} K".replace("e+0", "×10$^") + "$")
         ax[0].set_ylabel(r"amplification $|\delta\rho/\rho|/A_0$")
         ax[0].legend(fontsize=7.5, loc="upper right")
-        ax[1].text(0.04, 1.2, "solid: max while cooling (to 1.5 T$_{eq}$)\ndotted: max by 3 t$_{cool}$",
+        ax[1].text(0.04, 1.2, "solid: max while cooling (to 1.5 T$_{eq}$)\ndotted: max by 1.5 t$_{cool}$",
                    fontsize=8, color=INK2)
         save(fig, f"fig14_linear_uvb{tag}.png")
 
@@ -133,8 +133,7 @@ def fig_infinite_uvb():
                 p = d["params"]
                 if p["cooling"] != cool or p["Z"] != Z or p["rho_bg"] != n or p["amp"] != 1e-3:
                     continue
-                tf = tc(d)
-                cool_ph = d["t"] <= tf
+                cool_ph = d["t"] <= t_end(d)
                 pts.append((p["lam"] / d["cs_tcool0"], np.abs(d["amp_mode"][cool_ph]).max() / 1e-3))
             pts = np.array(sorted(pts))
             if len(pts):
@@ -199,7 +198,7 @@ def fig_amplitude_uvb():
                     p = d["params"]
                     if p["rho_bg"] == n and p["amp"] == A:
                         tf = tc(d)
-                        k = d["t"] <= 3 * tf
+                        k = d["t"] <= 3 * t_end(d)
                         a.semilogy(d["t"][k] / tf, np.maximum(d["amp_max"][k], 1e-4), color=c, lw=1.4,
                                    label=f"A$_0$ = {A:g}")
                         Lx = p["L_cloud"] / d["cs_tcool0"]

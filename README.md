@@ -68,7 +68,7 @@ export PLUTO_EXE=/path/to/build/pluto PLUTO_WORK=/tmp/pluto_runs NPROC=4
 python sweep.py infinite cloud amplitude scaling    # resumable
 python sweep.py infinite_uvb cloud_uvb amplitude_uvb # with a UV background
 python sweep.py chi1 chi1_large chi1_amplitude chi1_resolution chi1_pert chi1_pert_big chi1_scaling  # chi = 1
-python sweep.py longval                              # infinite medium to 200 t_cool
+python sweep.py longval                              # infinite medium to 200 x the time to cool (120-150 t_cool)
 python sweep.py pert_infinite pert_cloud             # other kinds of seed
 NPROC=4 python linear_maps.py          # original cooling
 NPROC=4 python linear_maps.py uvb      # Cloudy tables, with and without UV background

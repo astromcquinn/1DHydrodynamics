@@ -1,6 +1,6 @@
 """
 Linear-theory survey: amplification of an isobaric seed perturbation in a
-cooling background, as a function of x = lambda/(c_s t_cool,0), initial
+cooling background, as a function of x = lambda/(c_s t_cool), initial
 temperature T0 and metallicity Z, for both backgrounds:
 
   isochoric : infinite uniform cooling medium ("infinite cloud")
@@ -8,6 +8,10 @@ temperature T0 and metallicity Z, for both backgrounds:
 
 Because the equations are invariant under n -> a n, (x, t) -> (x, t)/a, the
 density only enters through x; we fix n = 0.01 cm^-3.
+
+Stored per row: G_max_cool (max |s| while cooling, t <= time to reach 1.5 T_eq),
+G_after (max |s| for t <= T_AFTER t_cool, t_cool = initial e-folding time; the
+window used in the paper), and the older G_2tf, G_3tf (2 and 3 x the time to cool).
 
 Output: ../results/linear_maps.npz
 """
@@ -34,9 +38,12 @@ def one(args):
                        stop_factor=LT.T_END_FACTOR)
     tf = ref["t"][-1]                    # time to cool to 1.5 T_floor/T_eq
     lam = x * ref["cs_tcool0_kpc"]
-    t_out = np.linspace(0, 3 * tf, 1500)
+    tc0 = ref["tcool0_Myr"]                  # time unit (initial e-folding time)
+    t_max = max(3 * tf, LT.T_AFTER * tc0)
+    t_out = np.unique(np.concatenate([np.linspace(0, t_max, 1500), [LT.T_AFTER * tc0]]))
     o = LT.integrate(N0, T0, lam, Z=Z, table=tab, background=bg, amp=1.0, Tstop=0,
-                     t_end=3 * tf * C.Myr, t_out=t_out)
+                     t_end=t_max * C.Myr, t_out=t_out)
+    after = o["t"] <= LT.T_AFTER * tc0 * (1 + 1e-9)
     s = np.abs(o["s"])
     cool = o["t"] <= tf
     i_f = np.argmin(np.abs(o["t"] - tf))
@@ -48,9 +55,10 @@ def one(args):
     rate_isochoric = -LT0 / ref["tcool0_Myr"]
     dT = np.abs(o["dT"])
     return dict(Z=Z, T0=T0, x=x, bg=bg, tf=tf, tcool0=ref["tcool0_Myr"],
-                dT_max_cool=dT[cool].max(), dT_max_3tf=dT.max(),
+                dT_max_cool=dT[cool].max(), dT_max_3tf=dT[o["t"] <= 3 * tf].max(),
+                dT_max_after=dT[after].max(), G_after=s[after].max(),
                 G_floor=s[i_f], G_max_cool=s[cool].max(), G_2tf=s[: i_2 + 1].max(),
-                G_3tf=s.max(), T_at_max=o["T"][cool][np.argmax(s[cool])],
+                G_3tf=s[o["t"] <= 3 * tf].max(), T_at_max=o["T"][cool][np.argmax(s[cool])],
                 das_isobaric=np.exp(rate_isobaric * tf),
                 das_isochoric=np.exp(rate_isochoric * tf),
                 timeshift=LT.timeshift_amplification(o["T"][cool][np.argmax(s[cool])], T0, tab, bg))
@@ -84,9 +92,12 @@ def one_uvb(args):
                        stop_factor=LT.T_END_FACTOR)
     tf = ref["t"][-1]
     lam = x * ref["cs_tcool0_kpc"]
-    t_out = np.linspace(0, 3 * tf, 1500)
+    tc0 = ref["tcool0_Myr"]
+    t_max = max(3 * tf, LT.T_AFTER * tc0)
+    t_out = np.unique(np.concatenate([np.linspace(0, t_max, 1500), [LT.T_AFTER * tc0]]))
     o = LT.integrate(n0, T0, lam, model=model, background=bg, amp=1.0, Tstop=0,
-                     t_end=3 * tf * C.Myr, t_out=t_out)
+                     t_end=t_max * C.Myr, t_out=t_out)
+    after = o["t"] <= LT.T_AFTER * tc0 * (1 + 1e-9)
     s = np.abs(o["s"])
     cool_ph = o["t"] <= tf
     i_2 = np.argmin(np.abs(o["t"] - 2 * tf))
@@ -99,7 +110,9 @@ def one_uvb(args):
     return dict(cooling=cool, n0=n0, Z=Z, T0=T0, x=x, bg=bg, tf=tf,
                 tcool0=ref["tcool0_Myr"], cs_tcool0=ref["cs_tcool0_kpc"],
                 T_end=ref["T"][-1],
-                G_max_cool=s[cool_ph].max(), G_2tf=s[: i_2 + 1].max(), G_3tf=s.max(),
+                G_max_cool=s[cool_ph].max(), G_2tf=s[: i_2 + 1].max(),
+                G_3tf=s[o["t"] <= 3 * tf].max(), G_after=s[after].max(),
+                dT_max_after=np.abs(o["dT"])[after].max(),
                 T_at_max=o["T"][cool_ph][np.argmax(s[cool_ph])],
                 das_isobaric=np.exp(rate_isobaric * tf),
                 das_isochoric=np.exp(rate_isochoric * tf))
@@ -133,14 +146,18 @@ def one_pert(args):
                        stop_factor=LT.T_END_FACTOR)
     tf = ref["t"][-1]
     lam = x * ref["cs_tcool0_kpc"]
-    t_out = np.linspace(0, 3 * tf, 1500)
+    tc0 = ref["tcool0_Myr"]
+    t_max = max(3 * tf, LT.T_AFTER * tc0)
+    t_out = np.unique(np.concatenate([np.linspace(0, t_max, 1500), [LT.T_AFTER * tc0]]))
     o = LT.integrate(n0, T0, lam, model=model, background=bg, amp=1.0, Tstop=0,
-                     t_end=3 * tf * C.Myr, t_out=t_out, pert=pert)
+                     t_end=t_max * C.Myr, t_out=t_out, pert=pert)
+    after = o["t"] <= LT.T_AFTER * tc0 * (1 + 1e-9)
     s, K = np.abs(o["s"]), np.abs(o["dK"])
     cool_ph = o["t"] <= tf
     late = o["t"] >= 2 * tf
     return dict(cooling=cool, pert=pert, n0=n0, Z=Z, T0=T0, x=x, bg=bg, tf=tf,
-                s_max_cool=s[cool_ph].max(), s_max=s.max(),
+                s_max_cool=s[cool_ph].max(), s_max=s[o["t"] <= 3 * tf].max(),
+                s_after=s[after].max(), tcool0=tc0,
                 s_late_max=s[late].max(), s_late_min=s[late].min(),
                 s_end=o["s"][-1], K_max=K.max(), K_end=o["dK"][-1],
                 s_sign_cool=np.sign(o["s"][cool_ph][np.argmax(s[cool_ph])]))

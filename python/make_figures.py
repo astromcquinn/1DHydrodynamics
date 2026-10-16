@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import cooling as C
 import linear_theory as LT
 import plutorun as P
-from metrics import t_cool as tc, t_cooled
+from metrics import t_cool as tc, t_end, t_cooled, T_AFTER
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 RES = os.path.join(HERE, "..", "results")
@@ -129,13 +129,13 @@ def fig_linear_maps():
             o = np.argsort(m["x"][sel])
             a.loglog(m["x"][sel][o], m["G_max_cool"][sel][o], color=ZCOL[Z],
                      label=f"Z = {Z}")
-            a.loglog(m["x"][sel][o], m["G_3tf"][sel][o], color=ZCOL[Z], lw=1, ls=":")
+            a.loglog(m["x"][sel][o], m["G_after"][sel][o], color=ZCOL[Z], lw=1, ls=":")
         a.axvline(1, color=GRID, lw=1)
         a.set_xlabel(r"$\lambda_0 / (c_s t_{cool})_0$")
         a.set_title(title + r", $T_0=10^6$ K")
     ax[0].set_ylabel(r"amplification $|\delta\rho/\rho|/A_0$")
     ax[0].legend(fontsize=8, loc="upper right")
-    ax[1].text(0.04, 3e3, "solid: max while cooling (to 1.5 T$_{floor}$)\ndotted: max by $3\\,t_{cool}$ (incl. ballistic phase)",
+    ax[1].text(0.04, 3e3, "solid: max while cooling (to 1.5 T$_{floor}$)\ndotted: max by $1.5\\,t_{cool}$ (incl. ballistic phase)",
                fontsize=8, color=INK2, va="top")
     for a in ax:
         a.set_xlim(0.02, 400)
@@ -164,13 +164,13 @@ def fig_linear_maps():
         if bg == "isobaric":
             sel &= m["x"] <= 1.0
         o = np.argsort(m["x"][sel])
-        x, G = m["x"][sel][o], m["G_3tf"][sel][o]
+        x, G = m["x"][sel][o], m["G_after"][sel][o]
         for c, n in zip([S1, S2, S3], [1e-2, 1e-3, 1e-4]):
             # x is measured with the initial (cloud) gas; for n=0.01 cs*tcool:
             cst = sweep_cs_tcool(n, 1e6, 0.3)
             a.loglog(x * cst, np.minimum(1.0 / G, 1.0), color=c, label=f"n = {n:g} cm$^{{-3}}$")
-            if "dT_max_3tf" in m:
-                dT = m["dT_max_3tf"][sel][o]
+            if "dT_max_after" in m:
+                dT = m["dT_max_after"][sel][o]
                 a.loglog(x * cst, np.minimum(1.0 / dT, 1.0), color=c, lw=1, ls="--")
         a.set_xlabel(r"initial wavelength $\lambda_0$ [kpc]")
         a.set_title(f"{bg} background, Z = 0.3, T$_0$ = 10$^6$ K")
@@ -204,8 +204,7 @@ def fig_infinite_sims():
                 if p["Z"] != Z or p["amp"] != A:
                     continue
                 x = p["lam"] / d["cs_tcool0"]
-                tf = tc(d)
-                cool = d["t"] <= tf
+                cool = d["t"] <= t_end(d)
                 pts.append((x, np.abs(d["amp_mode"][cool]).max() / A,
                             np.abs(d["amp_mode"]).max() / A,
                             (d["amp_max"].max() + 1) / (1 + A)))
@@ -237,7 +236,7 @@ def cloud_metrics(d):
     return dict(
         Lx=p["L_cloud"] / d["cs_tcool0"], x=p["lam"] / d["cs_tcool0"],
         G_cool=np.abs(d["amp_mode"][cool]).max() / A,
-        G_end=np.abs(d["amp_mode"][t <= 2.5 * tf]).max() / A,
+        G_end=np.abs(d["amp_mode"][t <= T_AFTER * tf]).max() / A,
         student=d["nmax_over_nmean"].max(),
         inner_max=d["amp_max"].max(), Z=p["Z"], n=p["rho_bg"], L=p["L_cloud"],
         nw=p["L_cloud"] / p["lam"], chi=p["chi"],
@@ -310,7 +309,7 @@ def fig_isochoric():
         if m["Lx"] < 1.5 or m["x"] < 1.5:
             continue
         tf = tc(d)
-        cool = d["t"] <= 0.95 * tf
+        cool = d["t"] <= 0.95 * t_end(d)
         pts.append((m["x"], m["G_cool"] - 1, m["G_end"] - 1,
                     np.abs(d["amp_mode_p"][cool]).max() / m_amp(d)))
     pts = np.array(sorted(pts))
@@ -379,7 +378,7 @@ def fig_amplitude():
                 p = d["params"]
                 if p["rho_bg"] == n and p["amp"] == A:
                     tf = tc(d)
-                    k = d["t"] <= 3 * tf
+                    k = d["t"] <= 3 * t_end(d)
                     a.semilogy(d["t"][k] / tf, d["amp_rms"][k] / (A / np.sqrt(2)), color=c,
                                lw=1.5, label=f"A$_0$ = {A:g}")
                     Lx = p["L_cloud"] / d["cs_tcool0"]
@@ -430,7 +429,7 @@ def fig_resolution():
             if d is None:
                 continue
             tf = tc(d)
-            k = d["t"] <= 3 * tf
+            k = d["t"] <= 3 * t_end(d)
             a.semilogy(d["t"][k] / tf, np.maximum(d["amp_max"][k], 1e-4), color=c, lw=1.5, label=lab)
         a.set_title(f"Small cloud (L/c$_s$t$_{{cool}}$ ≈ 0.9), A$_0$ = {A:g}")
         a.set_xlabel(r"t / t$_{cool}$")
