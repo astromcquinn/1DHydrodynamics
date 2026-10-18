@@ -382,6 +382,52 @@ def coasting():
                   f"  (G(1.5 t_cool)-1) x^2 = {(o['s'][j] - 1) * x**2:.1f}")
 
 
+def saturation():
+    """Sec. 'After cooling' / 'Long-wavelength regime': the maximum the long-wavelength
+    growth ever reaches in linear theory, and when (fraction of the cold sound period)."""
+    from make_figures_paper import envelope  # noqa: F401
+    header("Long-wavelength saturation (linear theory): max G ever reached")
+    for cool, n in [("cie", 1e-2), ("pie", 1e-3)]:
+        m = CM.make_model(cool, 0.3)
+        ref = LT.integrate(n, 1e6, 1.0, model=m, amp=0.0, stop_factor=LT.T_END_FACTOR)
+        tc0 = ref["tcool0_Myr"]
+        cs_cold = C.cs_of(ref["T"][-1]) / C.kpc * C.Myr
+        print(f"{cool}: c_s,cold = {cs_cold * C.kpc / C.Myr / 1e5:.1f} km/s, c_s0/c_s,cold = {C.cs_of(1e6) / C.cs_of(ref['T'][-1]):.1f}")
+        for x in [1, 2, 3, 5, 10, 20, 30]:
+            period = x * ref["cs_tcool0_kpc"] / cs_cold / tc0
+            tmax = max(3.0, 2.0 * period)
+            t_out = np.unique(np.concatenate([np.linspace(0, 2 * tc0, 400),
+                                              np.logspace(np.log10(2 * tc0), np.log10(tmax * tc0), 4000)]))
+            o = LT.integrate(n, 1e6, x * ref["cs_tcool0_kpc"], model=m, amp=1.0, Tstop=0,
+                             t_end=tmax * tc0 * C.Myr, t_out=t_out)
+            t, s = o["t"] / tc0, np.abs(o["s"])
+            i = np.argmax(s)
+            print(f"   x={x:3g}: cold sound period {period:6.1f} t_cool; max G = {s[i]:6.2f} at t = {t[i]:6.1f} t_cool"
+                  f" = {t[i] / period:.2f} periods = {t[i] / x:.1f} x t_cool;  (G-1) x = {(s[i] - 1) * x:.1f}")
+
+
+def structure():
+    """Sec. 'Structure versus compression' (Fig. structure): peak interior contrast,
+    when it occurs, the compression then, the number of cold sheets, and the state at the
+    end of the run, for the T_hot = 1e6 K nonlinear clouds."""
+    header("Structure versus compression (nonlinear clouds, T_hot = 1e6 K)")
+    sets = [d for d in runs("nonlinear") if 0 < d["params"]["L_cloud"] < 2 * d["cs_tcool0"]]
+    sets += runs("nonlinear_long")
+    for d in sorted(sets, key=lambda q: (q["params"]["cooling"], q["params"]["L_cloud"], q["params"]["amp"])):
+        p = d["params"]
+        if p["T_bg"] != 1e6:
+            continue
+        t = d["t"] / tc(d)
+        Lx = p["L_cloud"] / d["cs_tcool0"]
+        am, comp, nc = np.asarray(d["amp_max"]), np.asarray(d["nmean"]) / d["nmean"][0], np.asarray(d["nl_ncold"])
+        i = np.argmax(am)
+        above = t[am > 1]
+        print(f"{p['name']:30s} L/cstc={Lx:4.1f} A={p['amp']:<4g}: peak interior {am[i]:6.1f} at {t[i]:4.1f} t_cool"
+              f" (compression then {comp[i]:5.1f}, sheets {nc[i]:2d});  interior > 1 for t = "
+              + (f"{above.min():.1f}-{above.max():.1f}" if len(above) else " never ")
+              + f";  end of run ({t[-1]:4.1f} t_cool): interior {am[-1]:6.2f}, compression {comp[-1]:6.1f}, sheets {nc[-1]}")
+
+
 def durations():
     """Table 'runs': run durations in units of t_cool (initial e-folding time)."""
     header("Run durations in t_cool (Table 'runs')")
@@ -403,7 +449,8 @@ SECTIONS = dict(nonlinear=nonlinear, runaway=runaway, long_time=long_time, heate
                 seeds=seeds, conduction=conduction, sonic_vc=sonic_vc, dT_peaks=dT_peaks,
                 dT_validation=dT_validation, long_time_peaks=long_time_peaks,
                 nonlinear_balance=nonlinear_balance, metallicity=metallicity,
-                durations=durations, coasting=coasting)
+                durations=durations, coasting=coasting, saturation=saturation,
+                structure=structure)
 
 if __name__ == "__main__":
     for name in (sys.argv[1:] or SECTIONS):

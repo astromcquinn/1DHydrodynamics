@@ -62,9 +62,9 @@ def fig_cooling():
     ax[0].set_ylabel(r"$\Lambda$ [erg cm$^3$ s$^{-1}$]  ($n_e n_H$ norm.)")
     ax[0].set_title("Cooling function used (approximate S&D93 CIE)")
     ax[0].legend()
-    for y, lab in [(2, r"isobaric unstable below ($\Lambda_T<2$), both cases"),
-                   (1, r"cooling gas: $\delta p$ grows below ($\Lambda_T<1$)"),
-                   (0, r"Das et al. isochoric unstable below ($\Lambda_T<0$)")]:
+    for y, lab in [(2, r"isobaric unstable below ($\Lambda_T<2$; Field 1965), heated or cooling"),
+                   (1, r"cooling gas: $\delta p/p$ grows below ($\Lambda_T<1$)"),
+                   (0, r"heated medium: isochoric unstable below ($\Lambda_T<0$; Field 1965)")]:
         ax[1].axhline(y, color=INK2, lw=0.8, ls="--")
         ax[1].text(9.5e7, y + 0.1, lab, color=INK2, fontsize=7.5, ha="right",
                    bbox=dict(fc="#fcfcfb", ec="none", pad=0.5))

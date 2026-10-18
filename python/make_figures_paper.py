@@ -216,7 +216,9 @@ def fig_chi1_isochoric():
     p = np.array([q[2] for q in pref])
     P0 = np.median(p)
     ax[1].loglog(xx, P0 / xx ** 2, color=INK2, lw=1, ls="--",
-                 label=fr"${P0:.0f}\,(c_s t_{{cool}}/\lambda)^2$")
+                 label=fr"${P0:.0f}\,(c_s t_{{cool}}/\lambda)^2$ (by 1.5 t$_{{cool}}$)")
+    ax[1].loglog(xx, 40 / xx, color=INK2, lw=1, ls=":",
+                 label=r"$40\,c_s t_{cool}/\lambda$: maximum ever reached (linear theory, at $t\approx3\lambda/c_st_{cool}$)")
     ax[0].axhline(1, color=INK2, lw=0.8, ls="--")
     ax[0].set_ylabel(r"amplitude / A$_0$")
     ax[0].set_title("While cooling: δT/T grows (filled), δρ/ρ does not (open)")
@@ -360,6 +362,103 @@ def fig_chi1_seeds():
     # n = 1e-3: the L = 200 kpc clouds (the L = 50 kpc ones collapse)
     MP.fig_clouds(["chi1_pert", "chi1_pert_big"], "figP_chi1_seeds.png",
                   keep=lambda d: d["params"]["rho_bg"] == 1e-2 or d["params"]["L_cloud"] == 200.0)
+
+
+# ---------------------------------------------------------------------------
+def fig_structure():
+    """Structure versus compression: interior contrast, cloud compression and the
+    number of separate cold sheets against time, for the nonlinear clouds at
+    T_hot = 1e6 K (UV background solid, floor dashed)."""
+    LXS = [0.3, 1.0, 3.0, 10.0]
+    AMPS = [0.03, 0.1, 0.3]
+    ACOL = dict(zip(AMPS, [S1, S2, S3]))
+    fig, ax = plt.subplots(3, 4, figsize=(15, 9.0), sharex="col")
+    for col, Lx in enumerate(LXS):
+        for cool, ls in [("pie", "-"), ("cie", "--")]:
+            for A in AMPS:
+                sw = "nonlinear_long" if Lx >= 3 else "nonlinear"
+                name = f"nl_{cool}_T1e06_Lx{_fmt(Lx)}_A{_fmt(A)}" + ("_long" if Lx >= 3 else "")
+                f = os.path.join(RES, "runs", sw, name + ".npz")
+                if not os.path.exists(f):
+                    continue
+                d = P.load(f)
+                t = d["t"] / tc(d)
+                c = ACOL[A]
+                ax[0, col].semilogy(t, np.maximum(d["amp_max"], 1e-3), color=c, lw=1.4, ls=ls,
+                                    label=f"A$_0$ = {A:g}" if cool == "pie" else None)
+                ax[1, col].semilogy(t, np.asarray(d["nmean"]) / d["nmean"][0], color=c, lw=1.4, ls=ls)
+                ax[2, col].plot(t, np.asarray(d["nl_ncold"]), color=c, lw=1.4, ls=ls)
+                t_e = t_end(d) / tc(d)
+        for a in ax[:, col]:
+            a.axvline(t_e, color=GRID, lw=1)
+            a.axvline(Lx, color=INK2, lw=0.8, ls=":")
+        ax[0, col].set_title(f"L = {Lx:g} c$_s$t$_{{cool}}$")
+        ax[0, col].set_ylim(1e-3, 1e3)
+        ax[1, col].set_ylim(0.8, 3e3)
+        ax[2, col].set_ylim(0, 14)
+        ax[2, col].set_xlabel(r"t / t$_{cool}$")
+    ax[0, 0].set_ylabel(r"interior max $\rho/\bar\rho - 1$")
+    ax[1, 0].set_ylabel(r"cloud compression $\bar\rho/\bar\rho_0$")
+    ax[2, 0].set_ylabel("separate cold sheets")
+    h = [Line2D([], [], color=ACOL[A], lw=1.4, label=f"A$_0$ = {A:g}") for A in AMPS]
+    h += [Line2D([], [], color=INK2, lw=1.4, label="UV background"),
+          Line2D([], [], color=INK2, lw=1.4, ls="--", label="CIE + floor"),
+          Line2D([], [], color=INK2, lw=0.8, ls=":", label=r"t = L/c$_{s,hot}$"),
+          Line2D([], [], color=GRID, lw=1, label=r"t$_{end}$")]
+    ax[0, 0].legend(handles=h, fontsize=7.5, loc="upper left", ncol=2)
+    save(fig, "figP_structure.png")
+
+
+# ---------------------------------------------------------------------------
+def fig_letter():
+    """Two-panel figure for the short paper: amplification against x (linear theory and
+    the cloud simulations, UV background) and the minimum seed."""
+    m = dict(np.load(os.path.join(RES, "linear_maps_uvb.npz")))
+    base = (m["cooling"] == "pie") & (m["n0"] == 1e-3) & (m["Z"] == 0.3) & (m["T0"] == 1e6)
+    fig, ax = plt.subplots(1, 2, figsize=(11, 4.2))
+    a = ax[0]
+    for bg, ls in [("isochoric", "-"), ("isobaric", ":")]:
+        sel = base & (m["bg"] == bg)
+        if bg == "isobaric":
+            sel &= m["x"] <= 1.0
+        o = np.argsort(m["x"][sel])
+        a.loglog(m["x"][sel][o], m["G_max_cool"][sel][o], color=INK2, lw=1.6, ls=ls,
+                 label=("infinite medium" if bg == "isochoric" else "small isobaric cloud") + ", while cooling")
+        a.loglog(m["x"][sel][o], m["G_after"][sel][o], color=S4, lw=1.6, ls=ls,
+                 label=("infinite medium" if bg == "isochoric" else "small isobaric cloud") + r", by 1.5 t$_{cool}$")
+    xx = np.logspace(0, 2.5, 50)
+    a.loglog(xx, 1 + 40 / xx, color=S4, lw=0.9, ls="-.", label=r"maximum ever reached, $1+40\,c_st_{cool}/\lambda$")
+    for d in runs(*CHI1_SETS):
+        if d["params"]["cooling"] != "pie":
+            continue
+        mm = cloud_metrics(d)
+        ok = mm["cells_per_lam_final"] >= 10
+        c = lcol(mm["Lx"])
+        a.loglog(mm["x"], mm["G_cool"], "o", color=c, ms=5, mfc=c if ok else "none")
+    h = [Line2D([], [], color=c, marker="o", ls="none", label=f"clouds, L/c$_s$t$_{{cool}}$ {lab.replace('L/c$_s$t$_{cool}$ ', '')}") for _, _, c, lab in LBINS]
+    leg1 = a.legend(fontsize=6.8, loc="lower left")
+    a.add_artist(leg1)
+    a.legend(handles=h, fontsize=6.8, loc="upper right", title="simulations, while cooling (A = 0.02)", title_fontsize=6.8)
+    a.set_xlabel(r"$\lambda/(c_s t_{cool})$")
+    a.set_ylabel(r"amplification $|\delta\rho/\rho|/A$ of the seeded mode")
+    a.set_title("Growth of a density seed (UV background, T$_0$ = 10$^6$ K)")
+    a.set_ylim(0.7, 5e3)
+    a.set_xlim(5e-3, 400)
+    # right: minimum seed
+    a = ax[1]
+    for cool, n, c, lab in [("ciecl", 1e-2, INK2, "Cloudy CIE + 10$^4$ K floor")] + [("pie", n, cc, f"UV background, n = {n:g}") for n, cc in zip([1e-4, 1e-3, 1e-2], [S1, S2, S3])]:
+        sel = (m["cooling"] == cool) & (m["n0"] == n) & (m["Z"] == 0.3) & (m["T0"] == 1e6) & (m["bg"] == "isochoric")
+        o = np.argsort(m["x"][sel])
+        a.loglog(m["x"][sel][o], np.minimum(1 / m["G_after"][sel][o], 1), color=c, lw=1.6, label=lab)
+        a.loglog(m["x"][sel][o], np.minimum(1 / m["dT_max_after"][sel][o], 1), color=c, lw=1, ls="--")
+    a.plot([], [], color=INK2, lw=1.6, label=r"$|\delta\rho/\rho|$ reaches 1")
+    a.plot([], [], color=INK2, lw=1, ls="--", label=r"$|\delta T/T|$ reaches 1")
+    a.set_xlabel(r"$\lambda/(c_s t_{cool})$")
+    a.set_ylabel(r"minimum seed $\delta\rho/\rho$ (infinite medium)")
+    a.set_title(r"Seed needed to go nonlinear by 1.5 t$_{cool}$")
+    a.legend(fontsize=7)
+    a.set_ylim(2e-3, 1.5)
+    save(fig, "figL_growth.png")
 
 
 # ---------------------------------------------------------------------------

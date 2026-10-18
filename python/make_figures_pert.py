@@ -18,6 +18,7 @@ from make_figures import FIG, RES, S1, S2, S3, S4, S5, INK2, GRID, plt, save
 
 PERTS = ["density", "temperature", "sound", "velocity", "metal"]
 PCOL = dict(zip(PERTS, [S1, S2, S3, S4, S5]))
+PLS = dict(zip(PERTS, ["-", "--", ":", "-", "-."]))   # line styles, so T and Z seeds differ
 PLAB = {"density": "density (isobaric)", "temperature": "temperature (isochoric)",
         "sound": "sound wave", "velocity": "velocity", "metal": "metallicity"}
 CLAB = {"ciecl_z": "CIE + floor", "pie_z": "UV background"}
@@ -42,9 +43,9 @@ def fig_histories():
             o = LT.integrate(1e-3, 1e6, d["params"]["lam"], model=m, amp=1.0, pert=pt,
                              Tstop=0, t_end=tt[-1] * C.Myr * 1.001, t_out=tt)
             c = PCOL[pt]
-            ax[row, 0].plot(o["t"] / tf, o["s"], color=c, lw=1.5, label=PLAB[pt])
+            ax[row, 0].plot(o["t"] / tf, o["s"], color=c, lw=1.5, ls=PLS[pt], label=PLAB[pt])
             ax[row, 0].plot(d["t"][::6] / tf, d["amp_mode"][::6] / 1e-3, "o", color=c, ms=3.5, mfc="none")
-            ax[row, 1].plot(o["t"] / tf, o["dK"], color=c, lw=1.5)
+            ax[row, 1].plot(o["t"] / tf, o["dK"], color=c, lw=1.5, ls=PLS[pt])
             ax[row, 1].plot(d["t"][::6] / tf, d["amp_mode_K"][::6] / 1e-3, "o", color=c, ms=3.5, mfc="none")
         for a in ax[row]:
             a.set_yscale("symlog", linthresh=1)
@@ -80,7 +81,7 @@ def fig_linear_survey():
                 sel = (m["cooling"] == cool) & (m["pert"] == pt) & (m["bg"] == "isochoric")
                 o = np.argsort(m["x"][sel])
                 a.loglog(m["x"][sel][o], np.maximum(m[key][sel][o], 1e-3), color=PCOL[pt], lw=1.6,
-                         label=PLAB[pt])
+                         ls=PLS[pt], label=PLAB[pt])
             a.axhline(1, color=INK2, lw=0.6, ls="--")
             a.set_title(f"{CLAB[cool]}: |δρ/ρ|/A, {ttl}")
             a.set_ylim(1e-2, 3e2)
