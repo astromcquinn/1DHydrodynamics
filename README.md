@@ -17,6 +17,7 @@ The write-up is `main.tex` in [`astromcquinn/cooling-perturbations-paper`](https
 | `python/cooling_models.py` | the three cooling models (approx. CIE + floor; Cloudy CIE + floor; Cloudy with the HM12 UV background), each giving the net loss L(ρ, T), its derivatives, T_eq and the PLUTO tables |
 | `python/fetch_cloudy_tables.py`, `python/data/` | z = 0 slices of Grackle's Cloudy tables (Smith et al. 2017; HM2012 UV background and no-UVB) |
 | `python/linear_theory.py` | linearised equations integrated along a *cooling* background (infinite medium or small isobaric cloud) |
+| `python/lagrange.py` | 1D Lagrangian (mass-coordinate) hydro code for the same problem: exact cooling switch, collapsing clouds keep their cells, constant external pressure as a boundary condition (the fully isobaric background). Same diagnostics and output format as `plutorun.py`; validation runs in `results/runs_lagrange/` |
 | `python/plutorun.py` | writes `pluto.ini` and `cooltable.dat`, runs gPLUTO, measures the mode amplitude, saves a compact `.npz` and deletes the raw output |
 | `python/sweep.py` | parallel, resumable parameter sweeps (`infinite`, `cloud`, `amplitude`, `scaling`, `heating`) |
 | `python/linear_maps.py` | linear-theory survey over λ/(c_s t_cool), T₀, Z |
@@ -78,6 +79,23 @@ python make_figures.py && python make_figures_uvb.py && python make_figures_pape
 A single cloud run (2048 cells) takes 1 s to a few minutes on one core. The cost
 grows as 1/(n L) because small or low-density clouds need many sound-crossing
 times to cool.
+
+### The Lagrangian code
+
+```python
+import lagrange as LG
+r = LG.LRun("iso", rho_bg=1e-2, T_bg=1e6, L_cloud=0.05, box=0.05, lam=0.05/4.5, amp=1e-4, nx=256)
+res = r.execute()     # box == L_cloud: cloud gas only, constant external pressure (isobaric background)
+r = LG.LRun("small", rho_bg=1e-4, T_bg=1e6, L_cloud=50, box=150, lam=50/4.5, amp=1e-3, nx=2048, cloud_cells=683)
+```
+
+A staggered-grid von Neumann-Richtmyer scheme (leapfrog, quadratic + linear
+artificial viscosity, implicit p dV energy update) with the cooling of
+`cooling_models.py` operator split and sub-cycled at 5% per sub-step. Pure
+numpy; an infinite-medium run of 512 cells to 3 t_cool takes seconds, a small
+embedded cloud (0.1 c_s t_cool, 2048 cells) 1-2 minutes. It matches the linear
+theory to 0.1% for the infinite medium and to 1% for the isobaric cloud (with the
+unseeded boundary transient subtracted; see `paper_numbers.py lagrangian`).
 
 ### Using the script directly
 

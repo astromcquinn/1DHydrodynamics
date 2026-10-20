@@ -428,6 +428,68 @@ def structure():
               + f";  end of run ({t[-1]:4.1f} t_cool): interior {am[-1]:6.2f}, compression {comp[-1]:6.1f}, sheets {nc[-1]}")
 
 
+def lagrangian():
+    """Appendix 'A Lagrangian check': the 1D Lagrangian code (lagrange.py) against
+    linear theory and PLUTO, from results/runs_lagrange."""
+    import lagrange as LG
+    LGR = os.path.join(HERE, "..", "results", "runs_lagrange")
+    header("Lagrangian code (lagrange.py) vs linear theory and PLUTO")
+    m = CM.make_model("cie", 0.3)
+    print("infinite medium, CIE, n = 1e-2, A = 1e-4, 512 cells:")
+    for x in ["0.1", "1", "10"]:
+        f = os.path.join(LGR, f"inf_x{x}.npz")
+        if not os.path.exists(f):
+            continue
+        d = LG.load(f); p = d["params"]; A = p["amp"]; t = d["t"]
+        lt = LT.integrate(p["rho_bg"], p["T_bg"], p["lam"], model=m, amp=A, Tstop=0,
+                          t_end=t[-1] * C.Myr * 1.001, t_out=t)
+        G, Gl = d["amp_mode"] / A, lt["s"] / A
+        cool, after = t <= d["t_floor_iso"], t <= 1.5 * d["tcool0"]
+        err_cool = np.abs(G[cool] / Gl[cool] - 1).max()
+        print(f"   x={x:4s}: G_cool {np.abs(G[cool]).max():8.3f} (LT {np.abs(Gl[cool]).max():8.3f}, max rel. err while cooling {err_cool:.4f})"
+              f"  G_1.5tc {np.abs(G[after]).max():8.3f} (LT {np.abs(Gl[after]).max():8.3f})  steps {d['nsteps']}  {d['wall_s']:.0f} s")
+    print("isobaric cloud (box = L, constant external pressure), seeded minus unseeded run, vs isobaric linear theory:")
+    for Lx in ["0.01", "0.001"]:
+        f1, f0 = (os.path.join(LGR, f"iso_Lx{Lx}_A{a}.npz") for a in ("0.0001", "0"))
+        if not (os.path.exists(f1) and os.path.exists(f0)):
+            continue
+        d1, d0 = LG.load(f1), LG.load(f0); p = d1["params"]; A = p["amp"]; t = d1["profile_t"]
+        lt = LT.integrate(p["rho_bg"], p["T_bg"], p["lam"], model=m, amp=A, Tstop=0, background="isobaric",
+                          t_end=t[-1] * C.Myr * 1.001, t_out=t)
+        km = 2 * np.pi / (p["lam"] * C.kpc) / (p["rho_bg"] * C.mp)
+        r_init, x_init = d1["profiles"][0][0] * C.mp, d1["profile_x"][0] * C.kpc
+        dm = r_init * np.gradient(x_init); M = dm.sum()
+        mc = np.cumsum(dm) - 0.5 * dm - 0.5 * M; inner = np.abs(mc) < 0.3 * M
+        Acol = np.vstack([np.ones(inner.sum()), np.cos(km * mc[inner]), np.sin(km * mc[inner])]).T
+        Gd = []
+        for i in range(len(t)):
+            f = (d1["profiles"][i][0] - d0["profiles"][i][0]) / d0["profiles"][i][0]
+            c, *_ = np.linalg.lstsq(Acol, f[inner], rcond=None)
+            Gd.append(np.hypot(c[1], c[2]) / A * np.sign(c[1]))
+        Gd = np.array(Gd); Gl = lt["s"] / A
+        Tm = np.array([np.sum(d0["profiles"][i][2] * dm) / M for i in range(len(t))])
+        n = min(len(Gd), len(Gl)); k = Tm[:n] > 1.5e4
+        err = np.abs(Gd[:n][k] / Gl[:n][k] - 1)
+        j = np.nonzero(k)[0][-1]
+        print(f"   L/(c_s t_cool) = {Lx}: x = {p['lam'] / d1['cs_tcool0']:.1e}; max |G_LG/G_LT - 1| while T > 1.5e4 K: {err.max():.4f};"
+              f" at T = {Tm[j]:.2g} K: G_LG = {Gd[j]:.0f}, G_LT = {Gl[j]:.0f}; time-shift limit at 1.5e4 K: "
+              f"{LT.timeshift_amplification(1.5e4, 1e6, C.CoolingTable.for_Z(0.3), 'isobaric'):.0f}")
+    print("small embedded cloud (n = 1e-4, L = 0.1 c_s t_cool, lambda = L/4.5): growth at given mean T, and the collapse")
+    for name in ["small_A0.001_nc683_fine", "small_A0.001_nc683", "small_A0.001_nc683_lv", "small_A0.001_nc1365", "small_A0.1_nc683"]:
+        f = os.path.join(LGR, name + ".npz")
+        if not os.path.exists(f):
+            continue
+        d = LG.load(f); p = d["params"]; A = p["amp"]; t = d["t"] / d["tcool0"]; G = np.abs(d["amp_mode"]) / A
+        comp = d["nmean"] / d["nmean"][0]
+        out = []
+        for T in [3e5, 1e5, 5e4, 3e4, 2e4]:
+            i = np.argmax(d["Tmean"] < T)
+            out.append(f"T<{T:.0e}: t={t[i]:.3f} n/n0={comp[i]:.1f} G={G[i]:.0f}")
+        late = t >= 0.8 * t[-1]
+        print(f"   {name:26s} ({p['cloud_cells']} cloud cells, cq={p['cq']}, cl={p['cl']}, outputs every {np.median(np.diff(t)):.4f} t_cool): "
+              + "; ".join(out) + f"; max G {G.max():.0f}; peak interior {d['amp_max'].max():.2f}; late interior median {np.median(d['amp_max'][late]):.3g}; final compression {comp[-1]:.0f}")
+
+
 def durations():
     """Table 'runs': run durations in units of t_cool (initial e-folding time)."""
     header("Run durations in t_cool (Table 'runs')")
@@ -450,7 +512,7 @@ SECTIONS = dict(nonlinear=nonlinear, runaway=runaway, long_time=long_time, heate
                 dT_validation=dT_validation, long_time_peaks=long_time_peaks,
                 nonlinear_balance=nonlinear_balance, metallicity=metallicity,
                 durations=durations, coasting=coasting, saturation=saturation,
-                structure=structure)
+                structure=structure, lagrangian=lagrangian)
 
 if __name__ == "__main__":
     for name in (sys.argv[1:] or SECTIONS):
